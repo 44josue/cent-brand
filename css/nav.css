@@ -30,7 +30,7 @@
   align-items: center;
   justify-content: center;
   transition: opacity var(--transition);
-  transform: translateX(-10px);
+  transform: translateX(-20px);
 }
 
 .nav-logo:hover { opacity: 0.75; }
@@ -54,7 +54,7 @@
   align-items: center;
   justify-content: flex-start;
   padding-left: 30px;
-  transform: translateY(7px) translateX(260px); /* increase to move down, negative to move up */
+  transform: translateY(7px) translateX(230px); /* increase to move down, negative to move up */
 }
 
 /* Right section */

@@ -60,9 +60,9 @@ export function renderFooter() {
         <p>&copy; ${new Date().getFullYear()} CENT. All rights reserved.</p>
         <p><span style="font-weight:400">Powered by </span><a href="https://www.instagram.com/after.four__/" target="_blank" rel="noopener noreferrer" style="font-weight:700;color:#a0a0a0;text-decoration:none">AfterFour</a></p>
         <div class="footer-legal-links">
-          <a href="/privacy/">Privacy Policy</a>
+          <a href="../privacy/">Privacy Policy</a>
           <span>&middot;</span>
-          <a href="/terms/">Terms of Use</a>
+          <a href="../terms/">Terms of Use</a>
         </div>
       </div>
     </footer>
