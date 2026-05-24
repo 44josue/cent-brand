@@ -35,8 +35,8 @@ export async function renderNav() {
         <!-- Right links + actions -->
         <div class="nav-right">
           <ul class="nav-links" role="list">
-            <li><a href="/about/" ${currentPath.startsWith('/about') ? 'class="active"' : ''}>About</a></li>
-            <li><a href="/contact/" ${currentPath.startsWith('/contact') ? 'class="active"' : ''}>Contact</a></li>
+            <li><a href="../about/" ${currentPath.startsWith('/about') ? 'class="active"' : ''}>About</a></li>
+            <li><a href="../contact/" ${currentPath.startsWith('/contact') ? 'class="active"' : ''}>Contact</a></li>
           </ul>
 
           <div class="nav-actions">
@@ -93,13 +93,13 @@ export async function renderNav() {
         </button>
       </div>
       <div class="mobile-nav-links">
-        <a href="/" ${currentPath === '/' ? 'class="active"' : ''}>Home</a>
-        <a href="/products/" ${currentPath.startsWith('/products') ? 'class="active"' : ''}>Shop</a>
-        <a href="/about/" ${currentPath.startsWith('/about') ? 'class="active"' : ''}>About</a>
-        <a href="/contact/" ${currentPath.startsWith('/contact') ? 'class="active"' : ''}>Contact</a>
+        <a href="../" ${currentPath === '/'} ? 'class="active"' : ''}>Home</a>
+        <a href="../products/" ${currentPath.startsWith('/products') ? 'class="active"' : ''}>Shop</a>
+        <a href="../about/" ${currentPath.startsWith('/about') ? 'class="active"' : ''}>About</a>
+        <a href="../contact/" ${currentPath.startsWith('/contact') ? 'class="active"' : ''}>Contact</a>
         <div class="mobile-nav-divider"></div>
-        <a href="/account/" ${currentPath.startsWith('/account') ? 'class="active"' : ''}>Account</a>
-        <a href="/cart/" ${currentPath.startsWith('/cart') ? 'class="active"' : ''}>Cart</a>
+        <a href="../account/" ${currentPath.startsWith('/account') ? 'class="active"' : ''}>Account</a>
+        <a href="../cart/" ${currentPath.startsWith('/cart') ? 'class="active"' : ''}>Cart</a>
       </div>
       <div class="mobile-nav-footer">
         <div class="mobile-nav-actions">
