@@ -51,10 +51,10 @@
     }
 
     .hero-tagline {
-      font-size: var(--text-lg);
+      font-family: var(--font-script);
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
       color: var(--text-secondary);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      letter-spacing: 0.02em;
       margin-bottom: var(--space-10);
     }
 
@@ -404,7 +404,21 @@
     </section>
 
 
-<!-- Featured Products -->
+<!-- Every Cent Matters -->
+    <section class="ecm-section" aria-labelledby="ecm-heading">
+      <div class="ecm-inner">
+        <div class="ecm-text">
+          <h2 id="ecm-heading">Every Cent Matters</h2>
+          <p id="ecm-body">From the fabric to the finish, every decision is intentional. We source responsibly, price honestly, and craft pieces built to last. When you wear CENT, you're investing in something real.</p>
+          <a href="about/" class="btn btn-primary" style="margin-top:var(--space-6);display:inline-flex">Learn More</a>
+        </div>
+        <div class="ecm-image" id="ecm-image">
+          <img src="assets/images/Tomorrow..jpg" alt="Every Cent Matters" loading="lazy">
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Products -->
     <section class="featured-section" aria-labelledby="featured-heading">
       <div class="section-header">
         <div>
@@ -430,20 +444,6 @@
         <a href="collaborators/" class="btn btn-secondary btn-sm">View All</a>
       </div>
       <div class="collabs-home-scroll" id="collabs-home-grid"></div>
-    </section>
-
-    <!-- Every Cent Matters -->
-    <section class="ecm-section" aria-labelledby="ecm-heading">
-      <div class="ecm-inner">
-        <div class="ecm-text">
-          <h2 id="ecm-heading">Every Cent Matters</h2>
-          <p id="ecm-body">From the fabric to the finish, every decision is intentional. We source responsibly, price honestly, and craft pieces built to last. When you wear CENT, you're investing in something real.</p>
-          <a href="about/" class="btn btn-primary" style="margin-top:var(--space-6);display:inline-flex">Learn More</a>
-        </div>
-        <div class="ecm-image" id="ecm-image">
-          <img src="assets/images/Tomorrow..jpg" alt="Every Cent Matters" loading="lazy">
-        </div>
-      </div>
     </section>
 
     <!-- Newsletter -->
