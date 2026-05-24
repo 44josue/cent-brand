@@ -28,8 +28,8 @@ export async function renderNav() {
 
         <!-- Center logo -->
         <a href="/" class="nav-logo" aria-label="CENT Home">
-          <img src="/assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark">
-          <img src="/assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light">
+          <img src="../assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark">
+          <img src="../assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light">
         </a>
 
         <!-- Right links + actions -->
@@ -82,9 +82,9 @@ export async function renderNav() {
     <!-- Mobile drawer -->
     <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
       <div class="mobile-nav-header">
-        <a href="/" class="nav-logo" aria-label="CENT Home">
-          <img src="/assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark" height="44">
-          <img src="/assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light" height="44">
+        <a href="../" class="nav-logo" aria-label="CENT Home">
+          <img src="../assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark" height="44">
+          <img src="../assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light" height="44">
         </a>
         <button class="nav-icon-btn" id="mobile-nav-close" aria-label="Close menu">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
