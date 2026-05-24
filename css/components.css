@@ -105,6 +105,7 @@
 
 .product-card-image {
   aspect-ratio: 4 / 5;
+  max-height: 320px;
   overflow: hidden;
   background: var(--bg-surface);
   position: relative;
