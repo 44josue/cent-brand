@@ -16,27 +16,32 @@ export async function renderNav() {
 
   const currentPath = window.location.pathname;
 
+  // 1. Dynamically find your repository base path
+  // If on GitHub Pages, it yields '/cent-brand/', otherwise it safely defaults to '/' for local servers
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  const basePath = isGitHubPages ? '/cent-brand/' : '/';
+
   navPlaceholder.innerHTML = `
     <nav class="navbar" role="navigation" aria-label="Main navigation">
       <div class="navbar-inner">
 
         <!-- Left links -->
         <ul class="nav-left nav-links" role="list">
-          <li><a href="../" ${currentPath === '/' ? 'class="active"' : ''}>Home</a></li>
-          <li><a href="../products/" ${currentPath.startsWith('/products') ? 'class="active"' : ''}>Shop</a></li>
+          <li><a href="${basePath}" ${currentPath === basePath || currentPath === basePath + 'index.html' ? 'class="active"' : ''}>Home</a></li>
+          <li><a href="${basePath}products/" ${currentPath.includes('/products') ? 'class="active"' : ''}>Shop</a></li>
         </ul>
 
         <!-- Center logo -->
-        <a href="../" class="nav-logo" aria-label="CENT Home">
-          <img src="../assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark">
-          <img src="../assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light">
+        <a href="${basePath}" class="nav-logo" aria-label="CENT Home">
+          <img src="${basePath}assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark">
+          <img src="${basePath}assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light">
         </a>
 
         <!-- Right links + actions -->
         <div class="nav-right">
           <ul class="nav-links" role="list">
-            <li><a href="../about/" ${currentPath.startsWith('/about') ? 'class="active"' : ''}>About</a></li>
-            <li><a href="../contact/" ${currentPath.startsWith('/contact') ? 'class="active"' : ''}>Contact</a></li>
+            <li><a href="${basePath}about/" ${currentPath.includes('/about') ? 'class="active"' : ''}>About</a></li>
+            <li><a href="${basePath}contact/" ${currentPath.includes('/contact') ? 'class="active"' : ''}>Contact</a></li>
           </ul>
 
           <div class="nav-actions">
@@ -55,14 +60,14 @@ export async function renderNav() {
               </svg>
             </button>
 
-            <a href="../cart/" class="nav-icon-btn" id="cart-btn" aria-label="Cart">
+            <a href="${basePath}cart/" class="nav-icon-btn" id="cart-btn" aria-label="Cart">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/>
               </svg>
               <span class="cart-badge" aria-label="cart items" style="display:none">0</span>
             </a>
 
-            <a href="../account/" class="nav-icon-btn" id="account-btn" aria-label="Account" style="position:relative">
+            <a href="${basePath}account/" class="nav-icon-btn" id="account-btn" aria-label="Account" style="position:relative">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
               </svg>
@@ -82,9 +87,9 @@ export async function renderNav() {
     <!-- Mobile drawer -->
     <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
       <div class="mobile-nav-header">
-        <a href="../" class="nav-logo" aria-label="CENT Home">
-          <img src="../assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark" height="44">
-          <img src="../assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light" height="44">
+        <a href="${basePath}" class="nav-logo" aria-label="CENT Home">
+          <img src="${basePath}assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark" height="44">
+          <img src="${basePath}assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light" height="44">
         </a>
         <button class="nav-icon-btn" id="mobile-nav-close" aria-label="Close menu">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,13 +98,14 @@ export async function renderNav() {
         </button>
       </div>
       <div class="mobile-nav-links">
-        <a href="../" ${currentPath === '/'} ? 'class="active"' : ''}>Home</a>
-        <a href="../products/" ${currentPath.startsWith('/products') ? 'class="active"' : ''}>Shop</a>
-        <a href="../about/" ${currentPath.startsWith('/about') ? 'class="active"' : ''}>About</a>
-        <a href="../contact/" ${currentPath.startsWith('/contact') ? 'class="active"' : ''}>Contact</a>
+        <!-- Note: Fixed a hanging quote error here from your previous code -->
+        <a href="${basePath}" ${currentPath === basePath || currentPath === basePath + 'index.html' ? 'class="active"' : ''}>Home</a>
+        <a href="${basePath}products/" ${currentPath.includes('/products') ? 'class="active"' : ''}>Shop</a>
+        <a href="${basePath}about/" ${currentPath.includes('/about') ? 'class="active"' : ''}>About</a>
+        <a href="${basePath}contact/" ${currentPath.includes('/contact') ? 'class="active"' : ''}>Contact</a>
         <div class="mobile-nav-divider"></div>
-        <a href="../account/" ${currentPath.startsWith('/account') ? 'class="active"' : ''}>Account</a>
-        <a href="../cart/" ${currentPath.startsWith('/cart') ? 'class="active"' : ''}>Cart</a>
+        <a href="${basePath}account/" ${currentPath.includes('/account') ? 'class="active"' : ''}>Account</a>
+        <a href="${basePath}cart/" ${currentPath.includes('/cart') ? 'class="active"' : ''}>Cart</a>
       </div>
       <div class="mobile-nav-footer">
         <div class="mobile-nav-actions">
