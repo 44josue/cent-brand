@@ -212,7 +212,7 @@ function productCard(p) {
           ${hasSlider ? `
             <div class="card-slider" data-idx="0">
               ${images.map((m, i) => `
-                <img src="${m.url}" alt="${m.alt || p.name}" loading="${i === 0 ? 'eager' : 'lazy'}" width="400" height="533"
+                <img src="${m.url}" alt="${m.alt || p.name}" loading="${i === 0 ? 'eager' : 'lazy'}"
                   class="card-slide ${i === 0 ? 'active' : ''}"
                   onerror="this.src='${placeholder}'">
               `).join('')}
