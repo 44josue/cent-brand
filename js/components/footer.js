@@ -2,13 +2,16 @@ export function renderFooter() {
   const placeholder = document.getElementById('footer-placeholder');
   if (!placeholder) return;
 
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  const base = isGitHubPages ? '/cent-brand/' : '/';
+
   placeholder.innerHTML = `
     <footer>
       <div class="footer-main">
         <div class="footer-brand">
-          <a href="/" class="footer-logo">
-            <img src="/assets/images/black logo.png" alt="CENT" class="footer-logo-img footer-logo-dark">
-            <img src="/assets/images/white logo.png" alt="CENT" class="footer-logo-img footer-logo-light">
+          <a href="${base}" class="footer-logo">
+            <img src="${base}assets/images/black logo.png" alt="CENT" class="footer-logo-img footer-logo-dark">
+            <img src="${base}assets/images/white logo.png" alt="CENT" class="footer-logo-img footer-logo-light">
           </a>
           <p>Rwanda's premier streetwear destination. Every piece tells a story. Every cent matters.</p>
           <p class="footer-tagline">Made in Rwanda &mdash; Worn Everywhere</p>
@@ -28,27 +31,27 @@ export function renderFooter() {
         <div class="footer-col">
           <h5>Shop</h5>
           <ul>
-            <li><a href="/products/">All Products</a></li>
-            <li><a href="/products/?sort=newest">New Arrivals</a></li>
-            <li><a href="/products/?featured=true">Featured</a></li>
-            <li><a href="/collaborators/">Collaborations</a></li>
+            <li><a href="${base}products/">All Products</a></li>
+            <li><a href="${base}products/?sort=newest">New Arrivals</a></li>
+            <li><a href="${base}products/?featured=true">Featured</a></li>
+            <li><a href="${base}collaborators/">Collaborations</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
           <h5>Help</h5>
           <ul>
-            <li><a href="/faq/">FAQ</a></li>
-            <li><a href="/contact/">Contact Us</a></li>
-            <li><a href="/order-tracking/">Track Order</a></li>
-            <li><a href="/account/">My Account</a></li>
+            <li><a href="${base}faq/">FAQ</a></li>
+            <li><a href="${base}contact/">Contact Us</a></li>
+            <li><a href="${base}order-tracking/">Track Order</a></li>
+            <li><a href="${base}account/">My Account</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
           <h5>Company</h5>
           <ul>
-            <li><a href="/about/">About CENT</a></li>
+            <li><a href="${base}about/">About CENT</a></li>
             <li><a href="mailto:info@cent.rw">info@cent.rw</a></li>
             <li><a href="tel:+250788123456">+250 788 123 456</a></li>
             <li><span style="color:var(--text-muted)">Kigali, Rwanda</span></li>
@@ -60,9 +63,9 @@ export function renderFooter() {
         <p>&copy; ${new Date().getFullYear()} CENT. All rights reserved.</p>
         <p><span style="font-weight:400">Powered by </span><a href="https://www.instagram.com/after.four__/" target="_blank" rel="noopener noreferrer" style="font-weight:700;color:#a0a0a0;text-decoration:none">AfterFour</a></p>
         <div class="footer-legal-links">
-          <a href="../privacy/">Privacy Policy</a>
+          <a href="${base}privacy/">Privacy Policy</a>
           <span>&middot;</span>
-          <a href="../terms/">Terms of Use</a>
+          <a href="${base}terms/">Terms of Use</a>
         </div>
       </div>
     </footer>

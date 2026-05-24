@@ -130,11 +130,18 @@ async function renderPage(container) {
 
           <!-- Body -->
           <div class="input-group">
-            <label class="input-label" style="display:flex;align-items:center;justify-content:space-between">
-              Body (HTML) *
-              <button class="btn btn-sm btn-secondary" id="preview-html-btn">Preview</button>
+            <label class="input-label" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">
+              <span>Body *</span>
+              <div style="display:flex;gap:var(--space-2)">
+                <div style="display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+                  <button class="btn btn-sm" id="mode-plain-btn" style="border-radius:0;border:none;background:var(--accent);color:var(--text-inverse)">Plain text</button>
+                  <button class="btn btn-sm" id="mode-html-btn" style="border-radius:0;border:none;background:transparent;color:var(--text-muted)">HTML</button>
+                </div>
+                <button class="btn btn-sm btn-secondary" id="preview-html-btn">Preview</button>
+              </div>
             </label>
-            <textarea class="input" id="email-body" rows="14" style="font-family:var(--font-mono);font-size:var(--text-sm)" placeholder="<p>Your email content here...</p>"></textarea>
+            <textarea class="input" id="email-body" rows="14" style="font-family:var(--font-mono);font-size:var(--text-sm)" placeholder="Write your message here in plain text..."></textarea>
+            <span style="font-size:var(--text-xs);color:var(--text-muted)" id="body-mode-hint">Plain text mode — your text will be sent as-is.</span>
           </div>
 
           <!-- Attachments -->
@@ -231,6 +238,30 @@ async function renderPage(container) {
 
   const attachments = [];
   let recipientMode = 'all';
+  let bodyMode = 'plain'; // 'plain' or 'html'
+
+  // Plain / HTML body toggle
+  document.getElementById('mode-plain-btn')?.addEventListener('click', () => {
+    bodyMode = 'plain';
+    document.getElementById('mode-plain-btn').style.background = 'var(--accent)';
+    document.getElementById('mode-plain-btn').style.color = 'var(--text-inverse)';
+    document.getElementById('mode-html-btn').style.background = 'transparent';
+    document.getElementById('mode-html-btn').style.color = 'var(--text-muted)';
+    document.getElementById('email-body').style.fontFamily = 'var(--font-sans)';
+    document.getElementById('email-body').placeholder = 'Write your message here in plain text...';
+    document.getElementById('body-mode-hint').textContent = 'Plain text mode — your text will be sent as-is inside a branded CENT template.';
+  });
+
+  document.getElementById('mode-html-btn')?.addEventListener('click', () => {
+    bodyMode = 'html';
+    document.getElementById('mode-html-btn').style.background = 'var(--accent)';
+    document.getElementById('mode-html-btn').style.color = 'var(--text-inverse)';
+    document.getElementById('mode-plain-btn').style.background = 'transparent';
+    document.getElementById('mode-plain-btn').style.color = 'var(--text-muted)';
+    document.getElementById('email-body').style.fontFamily = 'var(--font-mono)';
+    document.getElementById('email-body').placeholder = '<p>Your email content here...</p>';
+    document.getElementById('body-mode-hint').textContent = 'HTML mode — paste or write full HTML email markup.';
+  });
 
   // Template tabs
   document.getElementById('template-tabs').addEventListener('click', (e) => {
@@ -343,8 +374,15 @@ async function renderPage(container) {
 
   // Preview
   document.getElementById('preview-html-btn')?.addEventListener('click', () => {
-    const body = document.getElementById('email-body').value;
-    document.getElementById('preview-frame').srcdoc = body;
+    const rawBody = document.getElementById('email-body').value;
+    let previewContent = rawBody;
+    if (bodyMode === 'plain') {
+      previewContent = `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#0a0a0a;color:#a3a3a3;font-size:15px;line-height:1.7">
+        <div style="text-align:center;padding-bottom:20px;border-bottom:1px solid #222;margin-bottom:24px"><span style="font-family:Arial Black,sans-serif;font-size:24px;font-weight:900;letter-spacing:0.15em;color:#f5f5f5">CENT</span></div>
+        ${rawBody.split('\n').map(l => l.trim() ? `<p style="margin:0 0 14px">${l}</p>` : '').join('')}
+      </div>`;
+    }
+    document.getElementById('preview-frame').srcdoc = previewContent;
     document.getElementById('preview-modal').classList.remove('hidden');
   });
   document.getElementById('preview-modal-close')?.addEventListener('click', () => {
@@ -373,6 +411,25 @@ async function renderPage(container) {
       recipients = emails.map(e => ({ email: e, name: '' }));
     }
 
+    // Wrap plain text in branded template
+    let finalBody = body;
+    if (bodyMode === 'plain') {
+      finalBody = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#0a0a0a;font-family:'Inter',sans-serif">
+<div style="max-width:560px;margin:0 auto;padding:24px 16px">
+  <div style="background:#111;border:1px solid #222;border-radius:12px;overflow:hidden">
+    <div style="padding:28px 32px;border-bottom:1px solid #1f1f1f;text-align:center">
+      <span style="font-family:'Arial Black',sans-serif;font-size:28px;font-weight:900;letter-spacing:0.15em;color:#f5f5f5">CENT</span>
+    </div>
+    <div style="padding:32px;color:#a3a3a3;font-size:15px;line-height:1.7">
+      ${body.split('\n').map(l => l.trim() ? `<p style="margin:0 0 14px">${l}</p>` : '').join('')}
+    </div>
+    <div style="padding:20px 32px;border-top:1px solid #1f1f1f;text-align:center">
+      <p style="color:#525252;font-size:12px;margin:0">CENT Streetwear — Kigali, Rwanda &middot; <a href="https://cent.rw" style="color:#777;text-decoration:none">cent.rw</a></p>
+    </div>
+  </div>
+</div></body></html>`;
+    }
+
     if (!confirm(`Send "${subject}" to ${recipients.length} recipient${recipients.length !== 1 ? 's' : ''}? This cannot be undone.`)) return;
 
     const btn = document.getElementById('send-btn');
@@ -381,7 +438,7 @@ async function renderPage(container) {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: { subject, previewText, body, recipients, attachments },
+        body: { subject, previewText, body: finalBody, recipients, attachments },
       });
       if (error) throw error;
       toast.success(`Sent to ${data?.sent ?? recipients.length} recipient${recipients.length !== 1 ? 's' : ''}.`);
