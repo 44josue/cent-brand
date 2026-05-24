@@ -137,7 +137,7 @@ function renderOrder(order) {
           </span>
         </div>
       </div>
-      <div style="display:flex;gap:var(--space-2)">
+      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" id="share-btn">
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Z"/>
@@ -150,6 +150,10 @@ function renderOrder(order) {
           </svg>
           Receipt
         </button>
+        ${['awaiting_payment_submission', 'awaiting_payment_verification'].includes(order.status) ? `
+        <button class="btn btn-sm" id="cancel-btn" style="color:var(--error);border-color:var(--error);background:transparent">
+          Cancel Order
+        </button>` : ''}
       </div>
     </div>
 
@@ -198,9 +202,9 @@ function renderOrder(order) {
 
         <!-- Token card -->
         <div class="card">
-          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-3)">Tracking Token</h3>
-          <div class="font-mono copy-btn" id="tracking-token-display" style="font-size:var(--text-xs);word-break:break-all;cursor:pointer;color:var(--text-muted)" title="Click to copy">${token}</div>
-          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-2)">Share this page to let others track your order.</p>
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-3)">Order Code</h3>
+          <div class="font-mono copy-btn" id="tracking-token-display" style="font-size:var(--text-lg);font-weight:700;letter-spacing:0.12em;cursor:pointer;color:var(--text-primary)" title="Click to copy">#${shortToken(token)}</div>
+          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-2)">Click to copy your full tracking code.</p>
         </div>
       </div>
     </div>
@@ -258,6 +262,26 @@ function renderOrder(order) {
     } else {
       await copyToClipboard(url);
       toast.success('Tracking link copied!');
+    }
+  });
+
+  // Cancel order
+  document.getElementById('cancel-btn')?.addEventListener('click', async () => {
+    if (!confirm('Cancel this order? This cannot be undone.')) return;
+    const btn = document.getElementById('cancel-btn');
+    btn.disabled = true;
+    btn.textContent = 'Cancelling...';
+    try {
+      const { error } = await supabase.functions.invoke('cancel-order', {
+        body: { orderId: order.id },
+      });
+      if (error) throw error;
+      toast.success('Order cancelled.');
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err) {
+      toast.error('Could not cancel. Contact support if the issue persists.');
+      btn.disabled = false;
+      btn.textContent = 'Cancel Order';
     }
   });
 

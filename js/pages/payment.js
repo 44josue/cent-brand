@@ -19,6 +19,7 @@ else { init(); }
 
 let selectedChannelId = null;
 let proofFile = null;
+let payOnArrival = false;
 
 async function init() {
   // If total missing from URL, fetch from DB
@@ -33,9 +34,13 @@ async function init() {
   const amountEl = document.getElementById('amount-display');
   if (amountEl) amountEl.textContent = formatRWF(totalCents);
 
-  // Pre-fill amount
+  // Pre-fill amount (read-only display)
   const amountInput = document.getElementById('amount-paid');
-  if (amountInput) amountInput.value = Math.floor(totalCents / 100);
+  if (amountInput) amountInput.value = formatRWF(totalCents);
+
+  // Pay on Arrival amount text
+  const poaAmountText = document.getElementById('poa-amount-text');
+  if (poaAmountText) poaAmountText.textContent = formatRWF(totalCents);
 
   // Order token
   const tokenEl = document.getElementById('order-token');
@@ -60,6 +65,7 @@ async function init() {
   }
 
   await loadChannels();
+  setupPayOnArrival();
   setupFileUpload();
   setupForm();
 }
@@ -111,6 +117,7 @@ async function loadChannels() {
         card.querySelector('.radio-indicator').innerHTML = '<div style="width:12px;height:12px;border-radius:50%;background:var(--accent)"></div>';
 
         selectedChannelId = card.dataset.id;
+        deselectPayOnArrival();
         const channel = channels.find(c => c.id === card.dataset.id);
         if (channel) showInstructions(channel);
       });
@@ -184,6 +191,43 @@ function setupFileUpload() {
   });
 }
 
+function setupPayOnArrival() {
+  const poaCard = document.getElementById('poa-card');
+  if (!poaCard) return;
+
+  poaCard.addEventListener('click', () => {
+    const list = document.getElementById('channels-list');
+    // Deselect all mobile channels
+    list?.querySelectorAll('.channel-card').forEach(c => {
+      c.classList.remove('selected');
+      c.querySelector('.radio-indicator').innerHTML = '';
+      c.querySelector('input').checked = false;
+    });
+    selectedChannelId = null;
+    payOnArrival = true;
+
+    // Style POA card as selected
+    poaCard.classList.add('selected');
+    document.getElementById('poa-radio-indicator').innerHTML = '<div style="width:12px;height:12px;border-radius:50%;background:var(--accent)"></div>';
+
+    // Show/hide relevant sections
+    document.getElementById('channel-instructions').classList.add('hidden');
+    document.getElementById('poa-banner').style.display = 'block';
+    document.getElementById('mobile-payment-fields').style.display = 'none';
+    document.getElementById('payment-submit-btn').textContent = 'Confirm Order (Pay on Arrival)';
+  });
+}
+
+function deselectPayOnArrival() {
+  payOnArrival = false;
+  document.getElementById('poa-card')?.classList.remove('selected');
+  const ind = document.getElementById('poa-radio-indicator');
+  if (ind) ind.innerHTML = '';
+  document.getElementById('poa-banner').style.display = 'none';
+  document.getElementById('mobile-payment-fields').style.display = 'block';
+  document.getElementById('payment-submit-btn').textContent = 'Submit Payment';
+}
+
 function setupForm() {
   document.getElementById('payment-form')?.addEventListener('submit', handleSubmit);
 }
@@ -193,15 +237,18 @@ async function handleSubmit(e) {
 
   const payerName = document.getElementById('payer-name').value.trim();
   const payerPhone = document.getElementById('payer-phone').value.trim();
-  const refCode = document.getElementById('ref-code')?.value.trim() || null;
-  const amountPaid = parseInt(document.getElementById('amount-paid').value) || 0;
+  const refCode = payOnArrival ? 'pay_on_arrival' : (document.getElementById('ref-code')?.value.trim() || null);
 
   let valid = true;
   if (!payerName) { markError('payer-name'); valid = false; } else { clearError('payer-name'); }
   if (!payerPhone || payerPhone.length < 8) { markError('payer-phone'); valid = false; } else { clearError('payer-phone'); }
-  if (!amountPaid) { markError('amount-paid'); valid = false; } else { clearError('amount-paid'); }
 
   if (!valid) { toast.error('Please fill in all required fields.'); return; }
+
+  if (!payOnArrival && !selectedChannelId) {
+    toast.error('Please select a payment method.');
+    return;
+  }
 
   const btn = document.getElementById('payment-submit-btn');
   btn.disabled = true;
@@ -225,8 +272,8 @@ async function handleSubmit(e) {
       token,
       payerName,
       payerPhone,
-      referenceCode: refCode || null,
-      amountPaidCents: amountPaid * 100,
+      referenceCode: refCode,
+      amountPaidCents: payOnArrival ? 0 : totalCents,
     });
 
     await clearLocalCart();

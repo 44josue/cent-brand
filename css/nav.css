@@ -30,12 +30,13 @@
   align-items: center;
   justify-content: center;
   transition: opacity var(--transition);
+  transform: translateX(-50px);
 }
 
 .nav-logo:hover { opacity: 0.75; }
 
 .nav-logo-img {
-  height: 48px;
+  height: 60px;
   width: auto;
   object-fit: contain;
   display: block;
@@ -53,6 +54,7 @@
   align-items: center;
   justify-content: flex-start;
   padding-left: 30px;
+  transform: translateY(8px) translateX(160px); /* increase to move down, negative to move up */
 }
 
 /* Right section */
@@ -67,18 +69,17 @@
 .nav-links {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-28);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .nav-links a {
-  font-size: var(--text-sm);
+  font-size: 15.5px;
   font-weight: 500;
   color: var(--text-secondary);
-  padding: var(--space-1) var(--space-3);
-  margin-top: 2px;
+  padding: var(--space-1) 0;
   border-radius: var(--radius);
   transition: color var(--transition), background var(--transition);
   text-decoration: none;
@@ -102,6 +103,11 @@
 .nav-links a:hover::after { width: calc(100% - var(--space-6)); }
 .nav-links a.active { color: var(--text-primary); }
 .nav-links a.active::after { width: calc(100% - var(--space-6)); }
+
+/* Nav right text links get same drop as left */
+.nav-right > .nav-links {
+  transform: translateY(7px) translateX(-20px); /* match .nav-left */
+}
 
 /* Nav actions */
 .nav-actions {

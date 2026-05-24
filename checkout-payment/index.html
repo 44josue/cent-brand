@@ -101,50 +101,72 @@
             <div class="skeleton" style="height:80px;border-radius:var(--radius-lg)"></div>
           </div>
 
+          <!-- Pay on Arrival option -->
+          <div id="poa-card" class="channel-card" style="margin-bottom:var(--space-6);display:flex;align-items:center;gap:var(--space-4)">
+            <div style="font-size:1.8rem">🚪</div>
+            <div style="flex:1">
+              <div style="font-size:var(--text-sm);font-weight:700">Pay on Arrival</div>
+              <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:2px">Pay in cash when your order is delivered</div>
+            </div>
+            <div style="width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0" id="poa-radio-indicator"></div>
+          </div>
+
           <!-- Instructions -->
           <div id="channel-instructions" class="card hidden" style="margin-bottom:var(--space-6)">
             <h4 style="margin-bottom:var(--space-4)">How to Pay</h4>
             <div id="instructions-body"></div>
           </div>
 
+          <!-- Pay on Arrival confirmation banner -->
+          <div id="poa-banner" style="display:none;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:var(--radius);padding:var(--space-4);margin-bottom:var(--space-6)">
+            <div style="font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-1)">🚪 Pay on Arrival selected</div>
+            <div style="font-size:var(--text-sm);color:var(--text-secondary)">Have <strong id="poa-amount-text"></strong> in cash ready when your order arrives. We'll confirm your order now.</div>
+          </div>
+
           <!-- Submission form -->
-          <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-4)">Payment Details</h3>
+          <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-4)">Your Details</h3>
           <form id="payment-form" novalidate>
             <div style="display:flex;flex-direction:column;gap:var(--space-4)">
               <div class="input-group">
                 <label for="payer-name">Your Name *</label>
-                <input type="text" id="payer-name" class="input" placeholder="Name on the account you sent from" required>
+                <input type="text" id="payer-name" class="input" placeholder="Full name" required>
                 <span class="error-msg">Name is required.</span>
               </div>
               <div class="input-group">
-                <label for="payer-phone">Payer Phone Number *</label>
+                <label for="payer-phone">Phone Number *</label>
                 <input type="tel" id="payer-phone" class="input" placeholder="+250 7XX XXX XXX" required>
                 <span class="error-msg">Phone number is required.</span>
               </div>
-<div class="input-group">
-                <label for="amount-paid">Amount You Sent (RWF) *</label>
-                <input type="number" id="amount-paid" class="input" placeholder="0" min="0" required>
-                <span class="error-msg">Amount is required.</span>
-              </div>
-              <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:var(--radius);padding:var(--space-3) var(--space-4);font-size:var(--text-sm);color:var(--success);margin-bottom:var(--space-1)">
-                ⚡ Providing the details below helps us verify your payment faster and process your order sooner.
-              </div>
-              <div class="input-group">
-                <label for="ref-code">Transaction Reference Code <span style="color:var(--text-muted);font-weight:400">(optional — recommended)</span></label>
-                <input type="text" id="ref-code" class="input" placeholder="e.g. P241023XXXXX" style="font-family:var(--font-mono)">
-                <span class="hint" style="color:var(--text-muted);font-size:var(--text-xs)">The code from your MoMo confirmation SMS.</span>
-              </div>
-              <div class="input-group">
-                <label for="proof-upload">Payment Screenshot <span style="color:var(--text-muted);font-weight:400">(optional — recommended)</span></label>
-                <div class="file-upload-area" id="proof-drop-zone">
-                  <input type="file" id="proof-upload" accept="image/*" style="display:none">
-                  <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" style="margin:0 auto var(--space-3);color:var(--text-muted)">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
-                  </svg>
-                  <p style="font-size:var(--text-sm);color:var(--text-muted)">Click to upload or drag & drop</p>
-                  <p id="proof-filename" style="color:var(--success);display:none"></p>
+
+              <!-- Mobile payment fields (hidden for Pay on Arrival) -->
+              <div id="mobile-payment-fields">
+                <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+                  <div class="input-group">
+                    <label for="amount-paid">Amount You Sent (RWF)</label>
+                    <input type="text" id="amount-paid" class="input" readonly style="cursor:default;opacity:0.7;background:var(--bg-hover)">
+                  </div>
+                  <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:var(--radius);padding:var(--space-3) var(--space-4);font-size:var(--text-sm);color:var(--success)">
+                    ⚡ Providing the details below helps us verify your payment faster and process your order sooner.
+                  </div>
+                  <div class="input-group">
+                    <label for="ref-code">Transaction Reference Code <span style="color:var(--text-muted);font-weight:400">(optional — recommended)</span></label>
+                    <input type="text" id="ref-code" class="input" placeholder="e.g. P241023XXXXX" style="font-family:var(--font-mono)">
+                    <span class="hint" style="color:var(--text-muted);font-size:var(--text-xs)">The code from your MoMo confirmation SMS.</span>
+                  </div>
+                  <div class="input-group">
+                    <label for="proof-upload">Payment Screenshot <span style="color:var(--text-muted);font-weight:400">(optional — recommended)</span></label>
+                    <div class="file-upload-area" id="proof-drop-zone">
+                      <input type="file" id="proof-upload" accept="image/*" style="display:none">
+                      <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" style="margin:0 auto var(--space-3);color:var(--text-muted)">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+                      </svg>
+                      <p style="font-size:var(--text-sm);color:var(--text-muted)">Click to upload or drag & drop</p>
+                      <p id="proof-filename" style="color:var(--success);display:none"></p>
+                    </div>
+                  </div>
                 </div>
               </div>
+
               <button type="submit" class="btn btn-primary btn-lg" id="payment-submit-btn">Submit Payment</button>
             </div>
           </form>

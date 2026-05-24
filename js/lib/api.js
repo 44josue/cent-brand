@@ -391,20 +391,24 @@ export async function clearCart(cartId) {
 // ── ORDERS ────────────────────────────────────────────────────────────────────
 
 export async function getOrderByToken(token) {
-  const { data, error } = await supabase
-    .from('orders')
-    .select(`
-      id, public_token, status, payment_status, total_cents, subtotal_cents, shipping_cents, discount_cents, shipping_address, note, created_at, updated_at,
-      customers(id, email, full_name, phone),
-      payment_channels:payment_channel_id(id, name, number),
-      order_items(id, product_name, size, color, unit_price_cents, quantity, image_url),
-      payment_submissions(id, payer_name, payer_phone, reference_code, amount_paid_cents, proof_storage_path, created_at, status)
-    `)
-    .eq('public_token', token)
-    .single();
+  const select = `
+    id, public_token, short_token, status, payment_status, total_cents, subtotal_cents, shipping_cents, discount_cents, shipping_address, note, created_at, updated_at,
+    customers(id, email, full_name, phone),
+    payment_channels:payment_channel_id(id, name, number),
+    order_items(id, product_name, size, color, unit_price_cents, quantity, image_url),
+    payment_submissions(id, payer_name, payer_phone, reference_code, amount_paid_cents, proof_storage_path, created_at, status)
+  `;
 
-  if (error) throw error;
-  return data;
+  // Try full UUID match first
+  const { data } = await supabase.from('orders').select(select).eq('public_token', token).maybeSingle();
+  if (data) return data;
+
+  // Try short_token column (6-char uppercase derived from UUID)
+  const short = token.replace(/-/g, '').slice(0, 6).toUpperCase();
+  const { data: byShort, error } = await supabase.from('orders').select(select).eq('short_token', short).maybeSingle();
+  if (byShort) return byShort;
+
+  throw error || new Error('Order not found');
 }
 
 export async function getOrderById(id) {
@@ -598,6 +602,18 @@ export async function deleteFaqItem(id) {
 }
 
 // ── CUSTOMERS ─────────────────────────────────────────────────────────────────
+
+export async function getAdminGuestCustomers({ search } = {}) {
+  let query = supabase
+    .from('customers')
+    .select('id, guest_name, guest_email, guest_phone, created_at')
+    .eq('is_guest', true)
+    .order('created_at', { ascending: false });
+  if (search) query = query.or(`guest_name.ilike.%${search}%,guest_email.ilike.%${search}%`);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
 
 export async function getAdminProfiles({ search, limit = 500 } = {}) {
   let query = supabase

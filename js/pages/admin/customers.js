@@ -1,5 +1,5 @@
 import { renderAdminShell } from '../../components/admin-shell.js';
-import { getAdminProfiles } from '../../lib/api.js';
+import { getAdminProfiles, getAdminGuestCustomers } from '../../lib/api.js';
 import { formatDate, initTheme } from '../../lib/utils.js';
 
 initTheme();
@@ -9,62 +9,57 @@ async function renderPage(container) {
   container.innerHTML = `
     <div class="admin-content">
       <div class="page-header">
-        <h1>Users</h1>
-        <div style="display:flex;gap:var(--space-2)">
-          <input type="search" class="input input-sm" id="customer-search" placeholder="Search by name or email..." style="width:240px">
-        </div>
+        <h1>Customers</h1>
+        <input type="search" class="input input-sm" id="customer-search" placeholder="Search name or email..." style="width:240px">
       </div>
-      <div id="customers-table"></div>
+
+      <h3 style="font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-3);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:var(--text-xs)">Registered Accounts</h3>
+      <div id="profiles-table" style="margin-bottom:var(--space-10)"></div>
+
+      <h3 style="font-size:var(--text-xs);font-weight:600;margin-bottom:var(--space-3);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em">Guest Customers</h3>
+      <div id="guests-table"></div>
     </div>
   `;
 
-  let allProfiles = [];
+  let allProfiles = [], allGuests = [];
 
   try {
-    const result = await getAdminProfiles();
-    allProfiles = result.profiles || [];
-    renderTable(allProfiles, document.getElementById('customers-table'));
+    const [profilesRes, guests] = await Promise.all([
+      getAdminProfiles(),
+      getAdminGuestCustomers(),
+    ]);
+    allProfiles = profilesRes.profiles || [];
+    allGuests = guests;
+    renderProfiles(allProfiles, document.getElementById('profiles-table'));
+    renderGuests(allGuests, document.getElementById('guests-table'));
   } catch (err) {
-    document.getElementById('customers-table').innerHTML = '<p style="color:var(--text-muted)">Could not load users.</p>';
+    container.querySelector('#profiles-table').innerHTML = '<p style="color:var(--text-muted)">Could not load customers.</p>';
   }
 
   document.getElementById('customer-search')?.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
-    const filtered = allProfiles.filter(p =>
-      (p.full_name || '').toLowerCase().includes(q) ||
-      (p.email || '').toLowerCase().includes(q)
-    );
-    renderTable(filtered, document.getElementById('customers-table'));
+    renderProfiles(allProfiles.filter(p =>
+      (p.full_name || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q)
+    ), document.getElementById('profiles-table'));
+    renderGuests(allGuests.filter(g =>
+      (g.guest_name || '').toLowerCase().includes(q) || (g.guest_email || '').toLowerCase().includes(q)
+    ), document.getElementById('guests-table'));
   });
 }
 
-function renderTable(profiles, container) {
+function renderProfiles(profiles, container) {
   if (!profiles.length) {
-    container.innerHTML = `
-      <div class="card">
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </div>
-          <h3>No users yet</h3>
-          <p>Everyone who creates an account will appear here.</p>
-        </div>
-      </div>
-    `;
+    container.innerHTML = `<div class="card"><p style="color:var(--text-muted);font-size:var(--text-sm)">No registered accounts found.</p></div>`;
     return;
   }
-
   const roleBadge = (role) => {
     const map = { admin: 'badge-error', ops: 'badge-warning', customer: 'badge-default' };
     return `<span class="badge ${map[role] || 'badge-default'}">${role || 'customer'}</span>`;
   };
-
   container.innerHTML = `
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr>
-          <th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th>
-        </tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th></tr></thead>
         <tbody>
           ${profiles.map(p => `
             <tr>
@@ -77,6 +72,29 @@ function renderTable(profiles, container) {
           `).join('')}
         </tbody>
       </table>
-    </div>
-  `;
+    </div>`;
+}
+
+function renderGuests(guests, container) {
+  if (!guests.length) {
+    container.innerHTML = `<div class="card"><p style="color:var(--text-muted);font-size:var(--text-sm)">No guest orders yet.</p></div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Type</th><th>Date</th></tr></thead>
+        <tbody>
+          ${guests.map(g => `
+            <tr>
+              <td style="font-weight:600;font-size:var(--text-sm)">${g.guest_name || '—'}</td>
+              <td style="font-size:var(--text-sm)">${g.guest_email || '—'}</td>
+              <td style="font-size:var(--text-sm);color:var(--text-muted)">${g.guest_phone || '—'}</td>
+              <td><span class="badge badge-default">Guest</span></td>
+              <td style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(g.created_at)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }

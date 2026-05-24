@@ -40,7 +40,7 @@ document.getElementById('contact-form')?.addEventListener('submit', async (e) =>
   btn.innerHTML = '<span class="spinner"></span> Sending...';
 
   try {
-    await callEdge('send-contact', { full_name: name, email, phone: phone || undefined, subject, body });
+    await callEdge('send-contact', { fullName: name, email, phone: phone || undefined, subject, message: body });
     document.getElementById('contact-form-wrap').classList.add('hidden');
     document.getElementById('contact-success').classList.remove('hidden');
   } catch (err) {

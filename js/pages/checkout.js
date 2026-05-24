@@ -16,6 +16,8 @@ const PAYMENT_CHANNELS = [
   { id: '341dfa1a-a518-428d-b647-6ff121fafab4', name: 'Airtel Money', logo: '🔴' },
 ];
 
+let isGuest = false;
+
 init();
 
 async function init() {
@@ -27,21 +29,31 @@ async function init() {
     return;
   }
 
-  // Require login — edge function uses JWT to identify the customer
   const session = await getSession();
-  if (!session) {
-    sessionStorage.setItem('cent_checkout_redirect', window.location.href);
-    toast.error('Please sign in to place an order.');
-    setTimeout(() => { window.location.href = '/login/?next=/checkout/'; }, 1500);
-    return;
-  }
+  isGuest = !session;
 
+  renderAuthBanner(session);
   renderSummary();
   renderPaymentChannels();
   populateDistricts();
   restoreFormFromSession();
-  await prefillFromProfile();
+  if (!isGuest) await prefillFromProfile();
   setupEvents();
+}
+
+function renderAuthBanner(session) {
+  const banner = document.getElementById('auth-banner');
+  if (!banner) return;
+  if (session) {
+    banner.innerHTML = `<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius);padding:var(--space-3) var(--space-4);font-size:var(--text-sm);color:var(--success);margin-bottom:var(--space-4)">✓ Signed in — your order will be linked to your account.</div>`;
+  } else {
+    banner.innerHTML = `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--space-4);margin-bottom:var(--space-4);font-size:var(--text-sm)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">
+        <span style="color:var(--text-secondary)">Checking out as <strong style="color:var(--text-primary)">Guest</strong> — no account needed.</span>
+        <a href="/login/?next=/checkout/" style="font-size:var(--text-xs);color:var(--text-muted);text-decoration:underline">Sign in instead</a>
+      </div>
+    </div>`;
+  }
 }
 
 function renderPaymentChannels() {
@@ -241,20 +253,29 @@ async function handleSubmit(e) {
     sector: document.getElementById('sector').value,
   };
 
-  const body = {
-    items,
-    shippingAddress,
-    paymentChannelId,
-    note: document.getElementById('notes').value.trim() || undefined,
-    promoCode: appliedPromo?.code || undefined,
-  };
+  const note = document.getElementById('notes').value.trim() || undefined;
+  const promoCode = appliedPromo?.code || undefined;
 
   try {
     const subtotal = cartState.items.reduce((s, i) => s + i.priceCents * i.quantity, 0);
     const discount = appliedPromo ? Math.floor(subtotal * (appliedPromo.discount_value || 0) / 100) : 0;
     const totalCents = subtotal - discount;
 
-    const result = await callEdge('place-order', body);
+    let result;
+    if (isGuest) {
+      result = await callEdge('guest-place-order', {
+        items,
+        guestName: shippingAddress.fullName,
+        guestEmail: shippingAddress.email,
+        guestPhone: shippingAddress.phone,
+        shippingAddress,
+        paymentChannelId,
+        note,
+        promoCode,
+      });
+    } else {
+      result = await callEdge('place-order', { items, shippingAddress, paymentChannelId, note, promoCode });
+    }
     sessionStorage.removeItem('cent_checkout');
     window.location.href = `/checkout-payment/?order_id=${result.orderId}&token=${result.token}&total=${totalCents}`;
   } catch (err) {

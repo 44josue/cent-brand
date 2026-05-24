@@ -28,8 +28,8 @@ export async function renderNav() {
 
         <!-- Center logo -->
         <a href="/" class="nav-logo" aria-label="CENT Home">
-          <img src="/assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark" height="48">
-          <img src="/assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light" height="48">
+          <img src="/assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark">
+          <img src="/assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light">
         </a>
 
         <!-- Right links + actions -->
@@ -254,7 +254,6 @@ async function loadAuthState() {
           const dot = document.createElement('span');
           dot.className = 'pulse-dot';
           btn.appendChild(dot);
-          btn.href = `/order-tracking/?token=${pending.public_token}`;
         }
       }
     }

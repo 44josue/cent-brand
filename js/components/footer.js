@@ -7,8 +7,8 @@ export function renderFooter() {
       <div class="footer-main">
         <div class="footer-brand">
           <a href="/" class="footer-logo">
-            <img src="/assets/images/black logo.png" alt="CENT" class="footer-logo-img footer-logo-dark" height="36">
-            <img src="/assets/images/white logo.png" alt="CENT" class="footer-logo-img footer-logo-light" height="36">
+            <img src="/assets/images/black logo.png" alt="CENT" class="footer-logo-img footer-logo-dark">
+            <img src="/assets/images/white logo.png" alt="CENT" class="footer-logo-img footer-logo-light">
           </a>
           <p>Rwanda's premier streetwear destination. Every piece tells a story. Every cent matters.</p>
           <p class="footer-tagline">Made in Rwanda &mdash; Worn Everywhere</p>
