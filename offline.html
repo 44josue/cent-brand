@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline — CENT</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: var(--space-8); }
+    .logo { font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 4rem; letter-spacing: 0.06em; margin-bottom: var(--space-6); }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="logo">CENT</div>
+    <h2 style="margin-bottom:var(--space-3)">You're offline</h2>
+    <p style="color:var(--text-muted);margin-bottom:var(--space-6)">Check your connection and try again.</p>
+    <button onclick="window.location.reload()" class="btn btn-primary">Try Again</button>
+  </div>
+</body>
+</html>

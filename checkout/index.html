@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — CENT</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/nav.css">
+  <link rel="stylesheet" href="/css/footer.css">
+  <style>
+    .checkout-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: var(--space-8);
+      padding: var(--space-6) 0 var(--space-16);
+      align-items: start;
+    }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    @media (max-width: 1023px) { .checkout-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 639px) { .form-grid-2 { grid-template-columns: 1fr; } }
+    .payment-channel-option {
+      display: flex; align-items: center; gap: var(--space-2); cursor: pointer;
+      border: 2px solid var(--border); border-radius: var(--radius);
+      padding: var(--space-3) var(--space-4); flex: 1; transition: border-color var(--transition);
+    }
+    .payment-channel-option.selected { border-color: var(--accent); }
+  </style>
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0a0a0a"></head>
+<body>
+  <div id="announcement-bar"></div>
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <div class="container">
+      <div style="padding-top:var(--space-6)">
+        <div class="progress-steps">
+          <div class="step done"><span class="step-num">✓</span> <span>Cart</span></div>
+          <div class="step-line done"></div>
+          <div class="step active"><span class="step-num">2</span> <span>Details</span></div>
+          <div class="step-line"></div>
+          <div class="step future"><span class="step-num">3</span> <span>Payment</span></div>
+          <div class="step-line"></div>
+          <div class="step future"><span class="step-num">4</span> <span>Confirmed</span></div>
+        </div>
+      </div>
+
+      <div class="checkout-layout">
+        <div>
+          <h2 style="font-size:var(--text-2xl);margin-bottom:var(--space-6)">Your Details</h2>
+          <form id="checkout-form" novalidate>
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div class="input-group">
+                <label for="full-name">Full Name *</label>
+                <input type="text" id="full-name" name="full_name" class="input" placeholder="Jean Pierre Habimana" autocomplete="name" required>
+                <span class="error-msg">Full name is required.</span>
+              </div>
+              <div class="form-grid-2">
+                <div class="input-group">
+                  <label for="email">Email *</label>
+                  <input type="email" id="email" name="email" class="input" placeholder="you@example.com" autocomplete="email" required>
+                  <span class="error-msg">Valid email is required.</span>
+                </div>
+                <div class="input-group">
+                  <label for="phone">Phone *</label>
+                  <input type="tel" id="phone" name="phone" class="input" placeholder="+250 7XX XXX XXX" autocomplete="tel" required>
+                  <span class="error-msg">Phone number is required.</span>
+                </div>
+              </div>
+              <div class="form-grid-2">
+                <div class="input-group">
+                  <label for="district">District *</label>
+                  <select id="district" name="district" class="input" required>
+                    <option value="">Select district</option>
+                  </select>
+                  <span class="error-msg">Please select a district.</span>
+                </div>
+                <div class="input-group">
+                  <label for="sector">Sector *</label>
+                  <select id="sector" name="sector" class="input" required disabled>
+                    <option value="">Select sector</option>
+                  </select>
+                  <span class="error-msg">Please select a sector.</span>
+                </div>
+              </div>
+              <div class="input-group">
+                <label for="notes">Order Notes <span style="color:var(--text-muted)">(optional)</span></label>
+                <textarea id="notes" name="notes" class="input" placeholder="Any specific delivery instructions..."></textarea>
+              </div>
+              <div class="input-group">
+                <label>Payment Method *</label>
+                <div id="payment-channels" style="display:flex;gap:var(--space-3);margin-top:var(--space-1)"></div>
+              </div>
+              <div id="error-banner" class="hidden" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:var(--space-3) var(--space-4);font-size:var(--text-sm);color:var(--error)"></div>
+              <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">Place Order</button>
+              <p style="font-size:var(--text-xs);color:var(--text-muted);text-align:center">
+                You'll submit payment details on the next step. No card required.
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <div class="order-summary">
+          <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-4)">Order Summary</h3>
+          <div id="checkout-summary">
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+  <div id="toast-container"></div>
+  <script type="module" src="/js/pages/checkout.js"></script>
+<script type="module" src="/js/lib/sw-register.js"></script></body>
+</html>

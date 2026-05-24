@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — CENT</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/nav.css">
+  <link rel="stylesheet" href="/css/footer.css">
+  <style>
+    .auth-page {
+      min-height: calc(100vh - var(--nav-height));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8) var(--space-4);
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+    }
+    .auth-logo {
+      font-size: var(--text-3xl);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      text-align: center;
+      margin-bottom: var(--space-2);
+      display: block;
+    }
+    .auth-tagline {
+      text-align: center;
+      font-size: var(--text-sm);
+      color: var(--text-muted);
+      margin-bottom: var(--space-6);
+    }
+    .divider-text {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin: var(--space-4) 0;
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+    .divider-text::before, .divider-text::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+  </style>
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0a0a0a"></head>
+<body>
+  <div id="nav-placeholder"></div>
+
+  <div class="auth-page">
+    <div class="auth-card">
+      <a href="/" class="auth-logo">cent</a>
+      <p class="auth-tagline">Every Cent Matters</p>
+
+      <div class="tabs" style="margin-bottom:var(--space-6)">
+        <button class="tab-btn active" data-tab="signin">Sign In</button>
+        <button class="tab-btn" data-tab="signup">Create Account</button>
+      </div>
+
+      <!-- Sign In -->
+      <div class="tab-panel active" id="tab-signin">
+        <form id="signin-form" novalidate>
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div class="input-group">
+              <label for="signin-email">Email</label>
+              <input type="email" id="signin-email" class="input" placeholder="you@example.com" autocomplete="email" required>
+              <span class="error-msg">Valid email required.</span>
+            </div>
+            <div class="input-group">
+              <label for="signin-password" style="display:flex;justify-content:space-between">
+                Password
+                <button type="button" id="forgot-btn" style="font-size:var(--text-xs);color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline">Forgot?</button>
+              </label>
+              <input type="password" id="signin-password" class="input" placeholder="••••••••" autocomplete="current-password" required>
+              <span class="error-msg">Password required.</span>
+            </div>
+            <div id="signin-error" class="hidden" style="font-size:var(--text-sm);color:var(--error);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:var(--space-3)"></div>
+            <button type="submit" class="btn btn-primary btn-lg w-full" id="signin-btn">Sign In</button>
+          </div>
+        </form>
+
+        <div style="text-align:center;margin-top:var(--space-4)">
+          <a href="/" style="font-size:var(--text-sm);color:var(--text-muted)">Continue as Guest →</a>
+        </div>
+      </div>
+
+      <!-- Create Account -->
+      <div class="tab-panel" id="tab-signup">
+        <form id="signup-form" novalidate>
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div class="input-group">
+              <label for="signup-name">Full Name</label>
+              <input type="text" id="signup-name" class="input" placeholder="Jean Pierre Habimana" autocomplete="name" required>
+              <span class="error-msg">Full name required.</span>
+            </div>
+            <div class="input-group">
+              <label for="signup-email">Email</label>
+              <input type="email" id="signup-email" class="input" placeholder="you@example.com" autocomplete="email" required>
+              <span class="error-msg">Valid email required.</span>
+            </div>
+            <div class="input-group">
+              <label for="signup-password">Password</label>
+              <input type="password" id="signup-password" class="input" placeholder="At least 8 characters" autocomplete="new-password" required minlength="8">
+              <span class="error-msg">Password must be at least 8 characters.</span>
+            </div>
+            <div class="input-group">
+              <label for="signup-confirm">Confirm Password</label>
+              <input type="password" id="signup-confirm" class="input" placeholder="••••••••" autocomplete="new-password" required>
+              <span class="error-msg">Passwords must match.</span>
+            </div>
+            <div id="signup-error" class="hidden" style="font-size:var(--text-sm);color:var(--error);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:var(--space-3)"></div>
+            <button type="submit" class="btn btn-primary btn-lg w-full" id="signup-btn">Create Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script type="module" src="/js/pages/login.js"></script>
+<script type="module" src="/js/lib/sw-register.js"></script></body>
+</html>

@@ -1,0 +1,235 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — CENT</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/nav.css">
+  <link rel="stylesheet" href="/css/footer.css">
+  <style>
+    .about-hero {
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: var(--space-16) var(--space-6);
+      background: radial-gradient(ellipse at 50% 0%, rgba(245,245,245,0.04) 0%, transparent 70%);
+      border-bottom: 1px solid var(--border);
+    }
+    .about-hero-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-4);
+    }
+    .about-hero h1 {
+      font-family: var(--font-logo);
+      font-size: clamp(4rem, 12vw, 9rem);
+      letter-spacing: 0.04em;
+      line-height: 0.9;
+      color: var(--text-primary);
+      margin-bottom: var(--space-6);
+    }
+    .about-hero p {
+      font-size: var(--text-xl);
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .about-section {
+      padding: var(--space-16) var(--space-6);
+      border-bottom: 1px solid var(--border);
+    }
+    .about-grid {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-16);
+      align-items: center;
+    }
+    .about-grid.reverse { direction: rtl; }
+    .about-grid.reverse > * { direction: ltr; }
+    .about-text-block .label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+    }
+    .about-text-block h2 {
+      font-size: var(--text-4xl);
+      line-height: 1.1;
+      margin-bottom: var(--space-4);
+    }
+    .about-text-block p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: var(--text-base);
+    }
+    .about-text-block p + p { margin-top: var(--space-3); }
+    .about-image-block {
+      aspect-ratio: 4/5;
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+    }
+    .about-image-block img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .about-image-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-logo);
+      font-size: 8rem;
+      color: var(--border);
+      letter-spacing: 0.06em;
+    }
+    .values-section {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: var(--space-16) var(--space-6);
+    }
+    .values-header {
+      text-align: center;
+      margin-bottom: var(--space-12);
+    }
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-6);
+    }
+    .value-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+      transition: border-color var(--transition), transform var(--transition);
+    }
+    .value-card:hover { border-color: var(--border-focus); transform: translateY(-2px); }
+    .value-number {
+      font-family: var(--font-logo);
+      font-size: 3rem;
+      color: var(--border-focus);
+      line-height: 1;
+      margin-bottom: var(--space-4);
+    }
+    .value-card h3 { font-size: var(--text-xl); margin-bottom: var(--space-2); }
+    .value-card p { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6; }
+    .cta-section {
+      text-align: center;
+      padding: var(--space-16) var(--space-6);
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+    }
+    .cta-section h2 { font-size: var(--text-4xl); margin-bottom: var(--space-4); }
+    .cta-section p { color: var(--text-secondary); margin-bottom: var(--space-8); max-width: 400px; margin-left: auto; margin-right: auto; }
+    @media (max-width: 768px) {
+      .about-grid { grid-template-columns: 1fr; gap: var(--space-8); }
+      .about-grid.reverse { direction: ltr; }
+      .values-grid { grid-template-columns: 1fr; }
+      .about-hero h1 { font-size: clamp(3rem, 16vw, 5rem); }
+    }
+  </style>
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0a0a0a"></head>
+<body>
+  <div id="announcement-bar"></div>
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <!-- Hero -->
+    <div class="about-hero">
+      <div>
+        <div class="about-hero-label">Rwanda-First Streetwear</div>
+        <h1>cent</h1>
+        <p>Every cent matters. Built in Kigali, worn worldwide. We craft pieces that speak to the culture without apology.</p>
+      </div>
+    </div>
+
+    <!-- Story -->
+    <div class="about-section">
+      <div class="about-grid">
+        <div class="about-text-block">
+          <div class="label">Our Story</div>
+          <h2>Born from the streets of Kigali</h2>
+          <p>CENT started with a simple idea: Rwandan youth deserved clothing that reflected their identity — bold, honest, and built to last. Not imported aesthetics slapped on local bodies, but a genuine expression of where we come from and where we're going.</p>
+          <p>Every design, every stitch, every drop is a statement. We move with purpose, and we price with integrity. Every cent matters — in the details of a garment and in the value we deliver to our community.</p>
+        </div>
+        <div class="about-image-block">
+          <img src="/assets/images/IMG_7432.JPG" alt="Born from the streets of Kigali" loading="lazy">
+        </div>
+      </div>
+    </div>
+
+    <!-- Mission -->
+    <div class="about-section" style="background:var(--bg-surface)">
+      <div class="about-grid reverse">
+        <div class="about-text-block">
+          <div class="label">The Mission</div>
+          <h2>Authentic. Affordable. Unapologetic.</h2>
+          <p>We don't chase trends — we set them. CENT operates on limited drops, intentional designs, and direct relationships with our community. No middlemen inflating prices. No compromises on quality.</p>
+          <p>Payments through MTN MoMo and Airtel Money keep everything local and accessible. Delivery across Rwanda. Community first, always.</p>
+        </div>
+        <div class="about-image-block">
+          <img src="/assets/images/IMG_7361JPG.JPEG" alt="Authentic. Affordable. Unapologetic." loading="lazy">
+        </div>
+      </div>
+    </div>
+
+    <!-- Values -->
+    <div class="values-section">
+      <div class="values-header">
+        <div style="font-size:var(--text-xs);font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:var(--space-3)">What We Stand For</div>
+        <h2 style="font-size:var(--text-4xl)">Our Values</h2>
+      </div>
+      <div class="values-grid">
+        <div class="value-card">
+          <div class="value-number">01</div>
+          <h3>Community First</h3>
+          <p>Every drop is a conversation with our people. We listen, we adapt, we build together. CENT is nothing without the community that wears it.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-number">02</div>
+          <h3>Radical Honesty</h3>
+          <p>No inflated prices. No fake hype. No shortcuts on quality. We say what we mean and deliver exactly what we promise — every single time.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-number">03</div>
+          <h3>Local Identity</h3>
+          <p>Rwanda is not a backdrop. It's the source. Every design carries the energy of Kigali, the pride of our culture, the ambition of our generation.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <h2>Ready to wear the culture?</h2>
+      <p>Explore the latest drops and find your fit.</p>
+      <div style="display:flex;gap:var(--space-3);justify-content:center;flex-wrap:wrap">
+        <a href="/products/" class="btn btn-primary btn-lg">Shop Now</a>
+        <a href="/contact/" class="btn btn-secondary btn-lg">Get in Touch</a>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+  <div id="toast-container"></div>
+  <script type="module" src="/js/pages/about.js"></script>
+<script type="module" src="/js/lib/sw-register.js"></script></body>
+</html>

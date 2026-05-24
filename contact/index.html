@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — CENT</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/nav.css">
+  <link rel="stylesheet" href="/css/footer.css">
+  <style>
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: var(--space-12);
+      padding: var(--space-8) 0 var(--space-16);
+      align-items: start;
+    }
+    .contact-info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3) 0;
+    }
+    .contact-info-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius);
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    @media (max-width: 1023px) { .contact-layout { grid-template-columns: 1fr; } }
+  </style>
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0a0a0a"></head>
+<body>
+  <div id="announcement-bar"></div>
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <div class="container">
+      <div class="page-header">
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span class="sep">›</span>
+          <span>Contact</span>
+        </div>
+        <h1>Get in Touch</h1>
+        <p>We typically respond within 24 hours.</p>
+      </div>
+
+      <div class="contact-layout">
+        <div>
+          <div id="contact-form-wrap">
+            <form id="contact-form" novalidate>
+              <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+                  <div class="input-group">
+                    <label for="contact-name">Full Name *</label>
+                    <input type="text" id="contact-name" class="input" required>
+                    <span class="error-msg">Name required.</span>
+                  </div>
+                  <div class="input-group">
+                    <label for="contact-email">Email *</label>
+                    <input type="email" id="contact-email" class="input" required>
+                    <span class="error-msg">Valid email required.</span>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+                  <div class="input-group">
+                    <label for="contact-phone">Phone <span style="color:var(--text-muted)">(optional)</span></label>
+                    <input type="tel" id="contact-phone" class="input">
+                  </div>
+                  <div class="input-group">
+                    <label for="contact-subject">Subject *</label>
+                    <select id="contact-subject" class="input" required>
+                      <option value="">Select subject</option>
+                      <option value="general">General Inquiry</option>
+                      <option value="order">Order Issue</option>
+                      <option value="returns">Returns & Exchanges</option>
+                      <option value="partnership">Partnership</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <span class="error-msg">Please select a subject.</span>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="contact-body">Message *</label>
+                  <textarea id="contact-body" class="input" rows="5" placeholder="Tell us how we can help..." required style="min-height:140px"></textarea>
+                  <span class="error-msg">Message required.</span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg" id="contact-submit-btn">Send Message</button>
+              </div>
+            </form>
+          </div>
+          <div id="contact-success" class="hidden" style="text-align:center;padding:var(--space-12)">
+            <div style="font-size:3rem;margin-bottom:var(--space-4)">✓</div>
+            <h3 style="margin-bottom:var(--space-2)">Message sent!</h3>
+            <p>We'll get back to you within 24 hours.</p>
+            <button class="btn btn-secondary" style="margin-top:var(--space-6)" onclick="window.location.reload()">Send Another</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-4)">Contact Info</h3>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">✉</div>
+              <div>
+                <div style="font-size:var(--text-sm);font-weight:600">Email</div>
+                <a href="mailto:admin@cent.rw" style="font-size:var(--text-sm);color:var(--text-muted)">admin@cent.rw</a>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">📞</div>
+              <div>
+                <div style="font-size:var(--text-sm);font-weight:600">Phone</div>
+                <a href="tel:+250700000000" style="font-size:var(--text-sm);color:var(--text-muted)">+250 700 000 000</a>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">📍</div>
+              <div>
+                <div style="font-size:var(--text-sm);font-weight:600">Location</div>
+                <div style="font-size:var(--text-sm);color:var(--text-muted)">Kigali, Rwanda</div>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">🕐</div>
+              <div>
+                <div style="font-size:var(--text-sm);font-weight:600">Hours</div>
+                <div style="font-size:var(--text-sm);color:var(--text-muted)">Mon–Fri: 9AM–6PM<br>Sat: 10AM–4PM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+  <div id="toast-container"></div>
+  <script type="module" src="/js/pages/contact.js"></script>
+<script type="module" src="/js/lib/sw-register.js"></script></body>
+</html>
