@@ -91,10 +91,15 @@ async function renderPage(container) {
     supabase.from('customers').select('id, guest_name, guest_email').eq('is_guest', true).order('guest_name'),
   ]);
 
+  const seen = new Set();
   const allCustomers = [
     ...(profiles || []).map(p => ({ id: p.id, name: p.full_name || p.email, email: p.email, type: 'registered' })),
     ...(guests || []).filter(g => g.guest_email).map(g => ({ id: g.id, name: g.guest_name || g.guest_email, email: g.guest_email, type: 'guest' })),
-  ];
+  ].filter(c => {
+    if (seen.has(c.email.toLowerCase())) return false;
+    seen.add(c.email.toLowerCase());
+    return true;
+  });
 
   container.innerHTML = `
     <div class="admin-content">
