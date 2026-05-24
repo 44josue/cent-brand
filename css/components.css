@@ -104,7 +104,7 @@
 }
 
 .product-card-image {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   background: var(--bg-surface);
   position: relative;
@@ -457,8 +457,8 @@ select.input option {
 
 .skeleton-text  { height: 1em; margin-bottom: 0.5em; }
 .skeleton-title { height: 1.5em; width: 60%; margin-bottom: 0.75em; }
-.skeleton-card  { aspect-ratio: 3/4; border-radius: var(--radius-lg); }
-.skeleton-img   { width: 100%; aspect-ratio: 3/4; }
+.skeleton-card  { aspect-ratio: 4/5; border-radius: var(--radius-lg); }
+.skeleton-img   { width: 100%; aspect-ratio: 4/5; }
 
 /* ── TOASTS ── */
 #toast-container {
