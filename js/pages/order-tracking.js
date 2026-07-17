@@ -5,6 +5,7 @@ import { formatRWF, formatDateTime, getParam, toast, copyToClipboard, shortToken
 import { supabase } from '../lib/supabase.js';
 import { updateCartBadges } from '../lib/cart.js';
 import { downloadReceiptPDF, shareReceiptImage } from '../lib/receipt.js';
+import { pageUrl } from '../lib/paths.js';
 
 renderNav();
 renderFooter();
@@ -22,7 +23,7 @@ if (!token) {
 function renderLookupForm() {
   document.getElementById('tracking-page').innerHTML = `
     <div style="max-width:480px;margin:var(--space-16) auto">
-      <div class="breadcrumb" style="margin-bottom:var(--space-4)"><a href="/">Home</a><span class="sep">›</span><span>Track Order</span></div>
+      <div class="breadcrumb" style="margin-bottom:var(--space-4)"><a href="${pageUrl()}">Home</a><span class="sep">›</span><span>Track Order</span></div>
       <h1 style="font-size:var(--text-2xl);margin-bottom:var(--space-2)">Track Your Order</h1>
       <p style="color:var(--text-muted);font-size:var(--text-sm);margin-bottom:var(--space-6)">Enter the order tracking code you received after checkout.</p>
       <div class="card">
@@ -37,7 +38,7 @@ function renderLookupForm() {
   document.getElementById('lookup-btn')?.addEventListener('click', () => {
     const val = document.getElementById('lookup-token').value.trim();
     if (!val) { toast.error('Enter your tracking code.'); return; }
-    window.location.href = `/order-tracking/?token=${encodeURIComponent(val)}`;
+    window.location.href = `${pageUrl('order-tracking/')}?token=${encodeURIComponent(val)}`;
   });
   document.getElementById('lookup-token')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('lookup-btn').click();
@@ -67,7 +68,7 @@ async function init() {
       <div class="empty-state">
         <h2>Order not found</h2>
         <p>This tracking link may be invalid or expired.</p>
-        <a href="/" class="btn btn-secondary" style="margin-top:var(--space-4)">Go Home</a>
+        <a href="${pageUrl()}" class="btn btn-secondary" style="margin-top:var(--space-4)">Go Home</a>
       </div>
     `;
   }
@@ -123,7 +124,7 @@ function renderOrder(order) {
     ` : ''}
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-4);margin-bottom:var(--space-6)">
       <div>
-        <div class="breadcrumb"><a href="/">Home</a><span class="sep">›</span><span>Track Order</span></div>
+        <div class="breadcrumb"><a href="${pageUrl()}">Home</a><span class="sep">›</span><span>Track Order</span></div>
         <h1 style="font-size:var(--text-2xl);margin-top:var(--space-2)">
           Order #${shortToken(token)}
         </h1>
@@ -315,7 +316,7 @@ function renderPaymentSection(order, latestPayment) {
       <div class="card" style="border-color:var(--warning)">
         <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-3);color:var(--warning)">⚠ Payment Required</h3>
         <p style="font-size:var(--text-sm);margin-bottom:var(--space-4)">Your order is waiting for payment. Please send <strong>${formatRWF(order.total_cents)}</strong> and submit your reference code.</p>
-        <a href="/checkout-payment/?order_id=${order.id}&token=${order.public_token}&total=${order.total_cents}" class="btn btn-primary">Submit Payment</a>
+        <a href="${pageUrl('checkout-payment/')}?order_id=${order.id}&token=${order.public_token}&total=${order.total_cents}" class="btn btn-primary">Submit Payment</a>
       </div>
     `;
   }

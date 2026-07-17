@@ -4,14 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Offline — CENT</title>
-  <link rel="stylesheet" href="/css/tokens.css">
-  <link rel="stylesheet" href="/css/reset.css">
-  <link rel="stylesheet" href="/css/global.css">
+  <script>
+    (function () {
+      var seg = location.hostname.indexOf('github.io') !== -1 ? location.pathname.split('/').filter(Boolean)[0] : '';
+      document.write('<base href="' + (seg ? '/' + seg + '/' : '/') + '">');
+    })();
+  </script>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/global.css">
   <style>
     body { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: var(--space-8); }
     .logo { font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 4rem; letter-spacing: 0.06em; margin-bottom: var(--space-6); }
   </style>
-  <link rel="icon" type="image/x-icon" href="/assets/images/icon.png">
+  <link rel="icon" type="image/x-icon" href="assets/images/icon.png">
 </head>
 <body>
   <div>

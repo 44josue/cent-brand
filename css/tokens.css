@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Dancing+Script:wght@700&display=swap');
+/* Bebas Neue (the big "CENT" display font) uses display=block so it stays invisible
+   for a brief moment rather than flashing in a fallback font and jumping in size. */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Dancing+Script:wght@700&display=swap');
 
 :root {
   --font-logo: 'Bebas Neue', 'Arial Black', sans-serif;
@@ -93,7 +96,7 @@
   --transition: 150ms ease;
   --transition-slow: 300ms ease;
 
-  --nav-height: 64px;
+  --nav-height: 76px;
   --sidebar-width: 240px;
   --max-width: 1280px;
   --content-width: 720px;

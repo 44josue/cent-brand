@@ -1,6 +1,7 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { initTheme } from '../lib/utils.js';
+import { pageUrl } from '../lib/paths.js';
 
 initTheme();
 renderNav();
@@ -76,7 +77,7 @@ document.getElementById('main-content').innerHTML = `
 
       <section>
         <h2>12. Contact</h2>
-        <p>Questions about these terms? Email us at <a href="mailto:hello@cent.rw">hello@cent.rw</a> or visit our <a href="/contact/">contact page</a>.</p>
+        <p>Questions about these terms? Email us at <a href="mailto:hello@cent.rw">hello@cent.rw</a> or visit our <a href="${pageUrl('contact/')}">contact page</a>.</p>
       </section>
     </div>
   </div>

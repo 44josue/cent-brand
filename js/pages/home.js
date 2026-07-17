@@ -1,6 +1,7 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { initTheme, formatRWF, toast, modal } from '../lib/utils.js';
+import { pageUrl } from '../lib/paths.js';
 
 // These are filled after dynamic imports resolve
 let getProducts, getCategories, getSiteSection, getCollaborators;
@@ -16,7 +17,7 @@ Promise.all([
   import('../lib/api.js'),
   import('../lib/cart.js'),
 ]).then(([api, cart]) => {
-  ({ getProducts, getCategories, getSiteSection, getCollaborators } = api);
+  ({ getProducts, getCategories, getSiteSection, getCollaborators, getLiveCmsImagesBySection } = api);
   ({ addToCart, updateCartBadges, getLocalCart } = cart);
   updateCartBadges();
   loadHomeLayout();
@@ -69,7 +70,7 @@ async function loadFeaturedProducts() {
           <div style="font-size:2.5rem;margin-bottom:var(--space-4)">🛍</div>
           <p style="font-weight:700;font-size:var(--text-lg);margin-bottom:var(--space-2)">New drops coming soon</p>
           <p style="color:var(--text-muted);margin-bottom:var(--space-6)">No featured products yet — check back soon.</p>
-          <a href="/products/" class="btn btn-primary">Browse All Products</a>
+          <a href="${pageUrl('products/')}" class="btn btn-primary">Browse All Products</a>
         </div>`;
       return;
     }
@@ -139,7 +140,7 @@ async function loadCollaborations() {
 
     section.style.display = 'block';
     grid.innerHTML = collabs.map(c => `
-      <a href="/products/?collab=${c.slug}" class="collab-home-card">
+      <a href="${pageUrl(`products/?collab=${c.slug}`)}" class="collab-home-card">
         ${c.banner_url
           ? `<img src="${c.banner_url}" alt="${c.name}" class="collab-home-banner" loading="lazy" onerror="this.style.display='none'">`
           : `<div class="collab-home-banner-ph">CENT × ${c.brand_name || c.name}</div>`}
@@ -164,8 +165,8 @@ async function loadCategories() {
   try {
     const cats = await getCategories();
     strip.innerHTML = `
-      <a href="/products/" class="category-chip">All</a>
-      ${cats.map(c => `<a href="/products/?category=${c.slug}" class="category-chip">${c.name}</a>`).join('')}
+      <a href="${pageUrl('products/')}" class="category-chip">All</a>
+      ${cats.map(c => `<a href="${pageUrl(`products/?category=${c.slug}`)}" class="category-chip">${c.name}</a>`).join('')}
     `;
   } catch {
     strip.innerHTML = '';
@@ -176,14 +177,20 @@ async function loadCategories() {
 
 async function loadCmsContent() {
   try {
-    const ecm = await getSiteSection('every_cent_matters');
+    const [ecm, liveImages] = await Promise.all([
+      getSiteSection('every_cent_matters'),
+      getLiveCmsImagesBySection(),
+    ]);
     if (ecm?.body) {
       const el = document.getElementById('ecm-body');
       if (el) el.textContent = ecm.body;
     }
-    if (ecm?.image_url) {
+    const imgUrl = liveImages.every_cent_matters || ecm?.image_url;
+    if (imgUrl) {
       const container = document.getElementById('ecm-image');
-      if (container) container.innerHTML = `<img src="${ecm.image_url}" alt="Every Cent Matters" style="width:100%;height:100%;object-fit:cover">`;
+      if (container) {
+        container.innerHTML = `<img src="${imgUrl}" alt="Every Cent Matters" style="width:100%;height:100%;object-fit:cover;object-position:center top">`;
+      }
     }
   } catch { /* use defaults */ }
 }
@@ -198,7 +205,7 @@ function productCard(p) {
 
   return `
     <article class="product-card" data-slug="${p.slug}" role="article">
-      <a href="/product/?slug=${p.slug}" class="product-card-image" tabindex="-1" aria-hidden="true">
+      <a href="${pageUrl(`product/?slug=${p.slug}`)}" class="product-card-image" tabindex="-1" aria-hidden="true">
         <img src="${img}" alt="${p.primaryAlt || p.name}" loading="lazy" width="400" height="533"
           onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22533%22%3E%3Crect width=%22400%22 height=%22533%22 fill=%22%23161616%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23525252%22 font-size=%2214%22 font-family=%22system-ui%22%3Ecent%3C/text%3E%3C/svg%3E'">
         <button class="quick-view-btn" data-id="${p.id}" aria-label="Quick view ${p.name}">Quick View</button>
@@ -206,7 +213,7 @@ function productCard(p) {
           ${wishlisted ? '♥' : '♡'}
         </button>
       </a>
-      <a href="/product/?slug=${p.slug}" class="product-card-body" style="display:block;text-decoration:none">
+      <a href="${pageUrl(`product/?slug=${p.slug}`)}" class="product-card-body" style="display:block;text-decoration:none">
         <div class="product-card-name">${p.name}</div>
         <div class="product-card-price">
           ${hasMultiple ? '<span class="from">from </span>' : ''}${price}
@@ -302,7 +309,7 @@ function openQuickView(product) {
         </div>
         <div style="margin-top:var(--space-6);display:flex;flex-direction:column;gap:var(--space-2)">
           <button class="btn btn-primary btn-lg" id="qv-add-btn" ${!selectedVariant || selectedVariant.stock === 0 ? 'disabled' : ''}>Add to Cart</button>
-          <a href="/product/?slug=${product.slug}" class="btn btn-secondary">View Full Details</a>
+          <a href="${pageUrl(`product/?slug=${product.slug}`)}" class="btn btn-secondary">View Full Details</a>
         </div>
       </div>
     </div>
@@ -409,7 +416,7 @@ function renderDrawerContents() {
     body.innerHTML = `
       <div class="empty-state" style="padding:var(--space-8) 0">
         <p>Your cart is empty.</p>
-        <a href="/products/" class="btn btn-primary" style="margin-top:var(--space-4)">Shop Now</a>
+        <a href="${pageUrl('products/')}" class="btn btn-primary" style="margin-top:var(--space-4)">Shop Now</a>
       </div>
     `;
     return;

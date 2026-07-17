@@ -2,6 +2,7 @@ import { renderAdminShell } from '../../components/admin-shell.js';
 import { getAdminCollaborators, upsertCollaborator, deleteCollaborator } from '../../lib/api.js';
 import { toast, slugify, initTheme } from '../../lib/utils.js';
 import { supabase } from '../../lib/supabase.js';
+import { pageUrl } from '../../lib/paths.js';
 
 initTheme();
 renderAdminShell('Collaborations', renderPage);
@@ -167,7 +168,7 @@ async function loadCollabs() {
                 <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-default'}">${c.is_active ? 'Active' : 'Hidden'}</span></td>
                 <td>
                   <div style="display:flex;gap:var(--space-2)">
-                    <a href="/products/?collab=${c.slug}" target="_blank" class="btn btn-ghost btn-sm">View</a>
+                    <a href="${pageUrl('products/')}?collab=${c.slug}" target="_blank" class="btn btn-ghost btn-sm">View</a>
                     <button class="btn btn-secondary btn-sm edit-collab-btn" data-id="${c.id}">Edit</button>
                     <button class="btn btn-ghost btn-sm del-collab-btn" data-id="${c.id}" style="color:var(--error)">Delete</button>
                   </div>

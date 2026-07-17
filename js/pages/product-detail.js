@@ -1,12 +1,13 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { formatRWF, getParam, toast, modal, renderMarkdown } from '../lib/utils.js';
+import { pageUrl } from '../lib/paths.js';
 
 renderNav();
 renderFooter();
 
 const slug = getParam('slug');
-if (!slug) { window.location.href = '/products/'; }
+if (!slug) { window.location.href = pageUrl('products/'); }
 
 let getProductBySlug, getRelatedProducts, subscribeToRestock;
 let addToCart, updateCartBadges, getLocalCart;
@@ -38,7 +39,7 @@ let currentMedia = [];
 async function loadProduct() {
   try {
     const product = await getProductBySlug(slug);
-    if (!product) { window.location.href = '/products/'; return; }
+    if (!product) { window.location.href = pageUrl('products/'); return; }
 
     currentProduct = product;
     document.title = `${product.name} — CENT`;
@@ -48,7 +49,7 @@ async function loadProduct() {
     if (product.categories) {
       const catLink = document.getElementById('breadcrumb-category');
       catLink.textContent = product.categories.name;
-      catLink.href = `/products/?category=${product.categories.slug}`;
+      catLink.href = `${pageUrl('products/')}?category=${product.categories.slug}`;
     }
 
     renderProductLayout(product);
@@ -63,7 +64,7 @@ async function loadProduct() {
     document.getElementById('product-layout').innerHTML = `
       <div style="grid-column:1/-1;text-align:center;padding:var(--space-16)">
         <h2>Product not found</h2>
-        <a href="/products/" class="btn btn-primary" style="margin-top:var(--space-4)">Browse Products</a>
+        <a href="${pageUrl('products/')}" class="btn btn-primary" style="margin-top:var(--space-4)">Browse Products</a>
       </div>
     `;
   }
@@ -487,11 +488,11 @@ async function loadRelated(categoryId, excludeId) {
     section.classList.remove('hidden');
     grid.innerHTML = products.map(p => `
       <article class="product-card">
-        <a href="/product/?slug=${p.slug}" class="product-card-image">
+        <a href="${pageUrl('product/')}?slug=${p.slug}" class="product-card-image">
           <img src="${p.primaryImage || ''}" alt="${p.name}" loading="lazy" width="400" height="533"
             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22533%22%3E%3Crect width=%22400%22 height=%22533%22 fill=%22%23161616%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23444%22 font-size=%2236%22 letter-spacing=%224%22 font-family=%22system-ui%22%3Ecent%3C/text%3E%3C/svg%3E'">
         </a>
-        <a href="/product/?slug=${p.slug}" class="product-card-body" style="display:block;text-decoration:none">
+        <a href="${pageUrl('product/')}?slug=${p.slug}" class="product-card-body" style="display:block;text-decoration:none">
           <div class="product-card-name">${p.name}</div>
           <div class="product-card-price">${p.minPrice ? formatRWF(p.minPrice) : 'N/A'}</div>
         </a>

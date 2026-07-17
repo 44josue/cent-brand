@@ -1,20 +1,24 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
-import { callEdge, validatePromoCode } from '../lib/api.js';
+import { callEdge, validatePromoCode, getPaymentChannels } from '../lib/api.js';
 import { formatRWF, districts, districtSectors, toast } from '../lib/utils.js';
 import { syncCart, updateCartBadges } from '../lib/cart.js';
 import { getCurrentProfile, getSession } from '../lib/auth.js';
+import { pageUrl } from '../lib/paths.js';
 
 renderNav();
 renderFooter();
 
 let cartState = null;
 let appliedPromo = null;
+let paymentChannels = [];
 
-const PAYMENT_CHANNELS = [
-  { id: '7e621e69-173d-422c-b260-c4eae60eb124', name: 'MTN MoMo', logo: '🟡' },
-  { id: '341dfa1a-a518-428d-b647-6ff121fafab4', name: 'Airtel Money', logo: '🔴' },
-];
+function channelLogo(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('mtn')) return '🟡';
+  if (n.includes('airtel')) return '🔴';
+  return '💳';
+}
 
 let isGuest = false;
 
@@ -25,7 +29,7 @@ async function init() {
   updateCartBadges();
 
   if (!cartState.items.length) {
-    window.location.href = '/cart/';
+    window.location.href = pageUrl('cart/');
     return;
   }
 
@@ -34,7 +38,7 @@ async function init() {
 
   renderAuthBanner(session);
   renderSummary();
-  renderPaymentChannels();
+  await renderPaymentChannels();
   populateDistricts();
   restoreFormFromSession();
   if (!isGuest) await prefillFromProfile();
@@ -50,19 +54,31 @@ function renderAuthBanner(session) {
     banner.innerHTML = `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--space-4);margin-bottom:var(--space-4);font-size:var(--text-sm)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">
         <span style="color:var(--text-secondary)">Checking out as <strong style="color:var(--text-primary)">Guest</strong> — no account needed.</span>
-        <a href="/login/?next=/checkout/" style="font-size:var(--text-xs);color:var(--text-muted);text-decoration:underline">Sign in instead</a>
+        <a href="${pageUrl('login/')}?next=${encodeURIComponent(pageUrl('checkout/'))}" style="font-size:var(--text-xs);color:var(--text-muted);text-decoration:underline">Sign in instead</a>
       </div>
     </div>`;
   }
 }
 
-function renderPaymentChannels() {
+async function renderPaymentChannels() {
   const el = document.getElementById('payment-channels');
   if (!el) return;
-  el.innerHTML = PAYMENT_CHANNELS.map((ch, i) => `
+
+  try {
+    paymentChannels = await getPaymentChannels();
+  } catch {
+    paymentChannels = [];
+  }
+
+  if (!paymentChannels.length) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">No payment methods available right now. Contact us at admin@cent.rw.</p>';
+    return;
+  }
+
+  el.innerHTML = paymentChannels.map((ch, i) => `
     <label class="payment-channel-option ${i === 0 ? 'selected' : ''}" data-id="${ch.id}">
       <input type="radio" name="payment_channel" value="${ch.id}" ${i === 0 ? 'checked' : ''} style="display:none">
-      <span style="font-size:1.4rem">${ch.logo}</span>
+      <span style="font-size:1.4rem">${channelLogo(ch.name)}</span>
       <span style="font-weight:600">${ch.name}</span>
     </label>
   `).join('');
@@ -277,7 +293,7 @@ async function handleSubmit(e) {
       result = await callEdge('place-order', { items, shippingAddress, paymentChannelId, note, promoCode });
     }
     sessionStorage.removeItem('cent_checkout');
-    window.location.href = `/checkout-payment/?order_id=${result.orderId}&token=${result.token}&total=${totalCents}`;
+    window.location.href = `${pageUrl('checkout-payment/')}?order_id=${result.orderId}&token=${result.token}&total=${totalCents}`;
   } catch (err) {
     console.error('place-order error:', err);
     errorBanner.textContent = err.message || 'Something went wrong. Please try again.';

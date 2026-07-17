@@ -1,6 +1,7 @@
 import { renderAdminShell } from '../../components/admin-shell.js';
 import { getAdminProducts, deleteProduct } from '../../lib/api.js';
 import { formatRWF, toast, initTheme } from '../../lib/utils.js';
+import { pageUrl } from '../../lib/paths.js';
 
 initTheme();
 renderAdminShell('Products', renderPage);
@@ -10,7 +11,7 @@ async function renderPage(container) {
     <div class="admin-content">
       <div class="page-header">
         <h1>Products</h1>
-        <a href="/admin/product-form/" class="btn btn-primary btn-sm">+ New Product</a>
+        <a href="${pageUrl('admin/product-form/')}" class="btn btn-primary btn-sm">+ New Product</a>
       </div>
       <div id="products-table"></div>
     </div>
@@ -33,7 +34,7 @@ async function loadProducts(container) {
             </div>
             <h3>No products yet</h3>
             <p>Start building your catalog by adding your first product.</p>
-            <a href="/admin/product-form/" class="btn btn-primary" style="margin-top:var(--space-4)">Add Product</a>
+            <a href="${pageUrl('admin/product-form/')}" class="btn btn-primary" style="margin-top:var(--space-4)">Add Product</a>
           </div>
         </div>
       `;
@@ -73,7 +74,7 @@ async function loadProducts(container) {
                   </td>
                   <td>
                     <div style="display:flex;gap:var(--space-2)">
-                      <a href="/admin/product-form/?id=${p.id}" class="btn btn-secondary btn-sm">Edit</a>
+                      <a href="${pageUrl('admin/product-form/')}?id=${p.id}" class="btn btn-secondary btn-sm">Edit</a>
                       <button class="btn btn-ghost btn-sm delete-btn" data-id="${p.id}" data-name="${p.name}">Delete</button>
                     </div>
                   </td>

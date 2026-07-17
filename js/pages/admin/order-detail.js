@@ -2,6 +2,7 @@ import { renderAdminShell } from '../../components/admin-shell.js';
 import { getOrderByToken, callEdge } from '../../lib/api.js';
 import { formatRWF, formatDate, formatDateTime, statusBadge, shortToken, getParam, toast, initTheme } from '../../lib/utils.js';
 import { supabase } from '../../lib/supabase.js';
+import { pageUrl } from '../../lib/paths.js';
 
 initTheme();
 renderAdminShell('Order Detail', renderPage);
@@ -26,7 +27,7 @@ async function renderPage(container) {
     <div class="admin-content">
       <div class="page-header">
         <div>
-          <a href="/admin/orders/" style="font-size:var(--text-sm);color:var(--text-muted);text-decoration:none">← Orders</a>
+          <a href="${pageUrl('admin/orders/')}" style="font-size:var(--text-sm);color:var(--text-muted);text-decoration:none">← Orders</a>
           <h1 id="order-title">Order</h1>
         </div>
         <div id="order-actions" style="display:flex;gap:var(--space-2)"></div>

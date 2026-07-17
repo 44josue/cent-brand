@@ -1,7 +1,10 @@
 // Register service worker and handle PWA install prompt
+import { getBasePath } from './paths.js';
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    const base = getBasePath();
+    navigator.serviceWorker.register(`${base}sw.js`, { scope: base })
       .catch(() => {}); // Fail silently — SW is a progressive enhancement
   });
 }

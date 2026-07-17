@@ -1,3 +1,5 @@
+import { pageUrl } from '../lib/paths.js';
+
 const PREF_KEY = 'cent_cookies';
 
 export function getCookieConsent() {
@@ -21,7 +23,7 @@ export function initCookieConsent() {
         <div class="cookie-title">We use cookies</div>
         <div class="cookie-desc">
           We use browser storage to keep your cart, wishlist, and theme. No ads, no tracking, no third-party profiling.
-          <a href="/privacy/" style="color:var(--accent);text-decoration:underline;margin-left:4px">Learn more</a>
+          <a href="${pageUrl('privacy/')}" style="color:var(--accent);text-decoration:underline;margin-left:4px">Learn more</a>
         </div>
       </div>
       <div class="cookie-actions">

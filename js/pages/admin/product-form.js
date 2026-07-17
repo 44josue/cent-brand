@@ -2,6 +2,7 @@ import { renderAdminShell } from '../../components/admin-shell.js';
 import { getProductById, upsertProduct, upsertVariant, deleteVariant, deleteProductMedia, setPrimaryMedia, insertProductMedia, getVariantMedia, getCategories, getCollections, getAdminCollaborators, getRestockSubscriberCount } from '../../lib/api.js';
 import { formatRWF, getParam, toast, slugify, initTheme } from '../../lib/utils.js';
 import { supabase } from '../../lib/supabase.js';
+import { pageUrl } from '../../lib/paths.js';
 
 initTheme();
 renderAdminShell('Product Form', renderPage);
@@ -13,7 +14,7 @@ async function renderPage(container) {
     <div class="admin-content">
       <div class="page-header">
         <div>
-          <a href="/admin/products/" style="font-size:var(--text-sm);color:var(--text-muted);text-decoration:none">← Products</a>
+          <a href="${pageUrl('admin/products/')}" style="font-size:var(--text-sm);color:var(--text-muted);text-decoration:none">← Products</a>
           <h1>${productId ? 'Edit Product' : 'New Product'}</h1>
         </div>
         <div style="display:flex;gap:var(--space-2)">
@@ -148,7 +149,7 @@ function renderForm(container, product, categories, collections, collaborators =
 
   // Preview
   document.getElementById('preview-btn')?.addEventListener('click', () => {
-    if (product?.slug) window.open(`/product/?slug=${product.slug}`, '_blank');
+    if (product?.slug) window.open(`${pageUrl('product/')}?slug=${product.slug}`, '_blank');
     else toast.info('Save the product first to preview it.');
   });
 }
@@ -383,7 +384,7 @@ async function saveProduct() {
 
     toast.success('Product saved!');
     if (!productId && savedId) {
-      window.location.href = `/admin/product-form/?id=${savedId}`;
+      window.location.href = `${pageUrl('admin/product-form/')}?id=${savedId}`;
     } else {
       btn.disabled = false;
       btn.textContent = 'Save Product';

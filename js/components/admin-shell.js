@@ -2,6 +2,7 @@ import { requireAdmin, signOut } from '../lib/auth.js';
 import { initTheme, toggleTheme, getTheme } from '../lib/utils.js';
 import { supabase } from '../lib/supabase.js';
 import { toast } from '../lib/utils.js';
+import { pageUrl } from '../lib/paths.js';
 
 export async function renderAdminShell(pageTitle = 'Dashboard', pageCallback = null) {
   initTheme();
@@ -63,62 +64,62 @@ export async function renderAdminShell(pageTitle = 'Dashboard', pageCallback = n
       <aside class="admin-sidebar" id="admin-sidebar" role="navigation" aria-label="Admin navigation">
         <div class="sidebar-header">
           <div>
-            <a href="/admin/" class="sidebar-logo">cent</a>
+            <a href="${pageUrl('admin/')}" class="sidebar-logo">cent</a>
             <div class="sidebar-logo-sub">Admin</div>
           </div>
         </div>
 
         <nav class="sidebar-nav">
-          <a href="/admin/" class="sidebar-link ${currentPath === '/admin/' || currentPath === '/admin/index.html' ? 'active' : ''}">
+          <a href="${pageUrl('admin/')}" class="sidebar-link ${currentPath.endsWith('/admin/') || currentPath.endsWith('/admin/index.html') ? 'active' : ''}">
             ${icon('grid')} Dashboard
           </a>
 
           <div class="sidebar-section-label">Commerce</div>
 
-          <a href="/admin/orders/" class="sidebar-link ${isActive(currentPath, '/admin/orders') ? 'active' : ''}">
+          <a href="${pageUrl('admin/orders/')}" class="sidebar-link ${isActive(currentPath, '/admin/orders') ? 'active' : ''}">
             ${icon('shopping-bag')} Orders
             ${pendingCount > 0 ? `<span class="sidebar-badge">${pendingCount}</span>` : ''}
           </a>
 
-          <a href="/admin/customers/" class="sidebar-link ${isActive(currentPath, '/admin/customers') ? 'active' : ''}">
+          <a href="${pageUrl('admin/customers/')}" class="sidebar-link ${isActive(currentPath, '/admin/customers') ? 'active' : ''}">
             ${icon('users')} Customers
           </a>
 
-          <a href="/admin/products/" class="sidebar-link ${isActive(currentPath, '/admin/products') ? 'active' : ''}">
+          <a href="${pageUrl('admin/products/')}" class="sidebar-link ${isActive(currentPath, '/admin/products') ? 'active' : ''}">
             ${icon('tag')} Products
           </a>
-          <a href="/admin/collections/" class="sidebar-link ${isActive(currentPath, '/admin/collections') ? 'active' : ''}">
+          <a href="${pageUrl('admin/collections/')}" class="sidebar-link ${isActive(currentPath, '/admin/collections') ? 'active' : ''}">
             ${icon('layers')} Collections
           </a>
 
           <div class="sidebar-section-label">Config</div>
 
-          <a href="/admin/cms/" class="sidebar-link ${isActive(currentPath, '/admin/cms') ? 'active' : ''}">
+          <a href="${pageUrl('admin/cms/')}" class="sidebar-link ${isActive(currentPath, '/admin/cms') ? 'active' : ''}">
             ${icon('file-text')} CMS
           </a>
 
-          <a href="/admin/promotions/" class="sidebar-link ${isActive(currentPath, '/admin/promotions') ? 'active' : ''}">
+          <a href="${pageUrl('admin/promotions/')}" class="sidebar-link ${isActive(currentPath, '/admin/promotions') ? 'active' : ''}">
             ${icon('percent')} Promotions
           </a>
 
-          <a href="/admin/channels/" class="sidebar-link ${isActive(currentPath, '/admin/channels') ? 'active' : ''}">
+          <a href="${pageUrl('admin/channels/')}" class="sidebar-link ${isActive(currentPath, '/admin/channels') ? 'active' : ''}">
             ${icon('credit-card')} Channels
           </a>
 
-          <a href="/admin/collaborators/" class="sidebar-link ${isActive(currentPath, '/admin/collaborators') ? 'active' : ''}">
+          <a href="${pageUrl('admin/collaborators/')}" class="sidebar-link ${isActive(currentPath, '/admin/collaborators') ? 'active' : ''}">
             ${icon('users')} Collabs
           </a>
 
-          <a href="/admin/staff/" class="sidebar-link ${isActive(currentPath, '/admin/staff') ? 'active' : ''}">
+          <a href="${pageUrl('admin/staff/')}" class="sidebar-link ${isActive(currentPath, '/admin/staff') ? 'active' : ''}">
             ${icon('shield')} Staff
           </a>
 
-          <a href="/admin/contact/" class="sidebar-link ${isActive(currentPath, '/admin/contact') ? 'active' : ''}">
+          <a href="${pageUrl('admin/contact/')}" class="sidebar-link ${isActive(currentPath, '/admin/contact') ? 'active' : ''}">
             ${icon('mail')} Messages
             ${unreadCount > 0 ? `<span class="sidebar-badge">${unreadCount}</span>` : ''}
           </a>
 
-          <a href="/admin/email/" class="sidebar-link ${isActive(currentPath, '/admin/email') ? 'active' : ''}">
+          <a href="${pageUrl('admin/email/')}" class="sidebar-link ${isActive(currentPath, '/admin/email') ? 'active' : ''}">
             ${icon('send')} Email Campaigns
           </a>
         </nav>
@@ -131,7 +132,7 @@ export async function renderAdminShell(pageTitle = 'Dashboard', pageCallback = n
               <div class="sidebar-user-role">${profile.role}</div>
             </div>
           </div>
-          <a href="/" class="sidebar-link">
+          <a href="${pageUrl()}" class="sidebar-link">
             ${icon('external-link')} View Store
           </a>
           <button class="sidebar-link w-full" id="sidebar-signout" style="text-align:left;width:100%;cursor:pointer">
@@ -167,7 +168,7 @@ export async function renderAdminShell(pageTitle = 'Dashboard', pageCallback = n
   // Events
   document.getElementById('sidebar-signout')?.addEventListener('click', async () => {
     await signOut();
-    window.location.href = '/login/';
+    window.location.href = pageUrl('login/');
   });
 
   document.getElementById('admin-theme-btn')?.addEventListener('click', () => toggleTheme());

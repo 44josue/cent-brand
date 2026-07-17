@@ -5,6 +5,7 @@ import { getOrdersByCustomer } from '../lib/api.js';
 import { supabase } from '../lib/supabase.js';
 import { formatRWF, formatDate, modal, toast, statusBadge, shortToken, initTheme } from '../lib/utils.js';
 import { updateCartBadges } from '../lib/cart.js';
+import { pageUrl } from '../lib/paths.js';
 
 initTheme();
 renderNav();
@@ -14,11 +15,11 @@ updateCartBadges();
 init();
 
 async function init() {
-  const user = await requireAuth('/login/?redirect=/account/');
+  const user = await requireAuth();
   if (!user) return;
 
   const profile = await getCurrentProfile();
-  if (!profile) { window.location.href = '/login/'; return; }
+  if (!profile) { window.location.href = pageUrl('login/'); return; }
 
   // Get customer record for orders
   const { data: customer } = await supabase
@@ -106,7 +107,7 @@ function renderAccount(profile, orders, wishlist) {
   document.getElementById('track-lookup-btn')?.addEventListener('click', () => {
     const token = document.getElementById('track-token-input').value.trim();
     if (!token) { toast.error('Enter a tracking code.'); return; }
-    window.location.href = `/order-tracking/?token=${encodeURIComponent(token)}`;
+    window.location.href = `${pageUrl('order-tracking/')}?token=${encodeURIComponent(token)}`;
   });
   document.getElementById('track-token-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('track-lookup-btn').click();
@@ -123,7 +124,7 @@ function renderAccount(profile, orders, wishlist) {
   // Sign out
   document.getElementById('signout-btn')?.addEventListener('click', async () => {
     await signOut();
-    window.location.href = '/';
+    window.location.href = pageUrl();
   });
 
   // Save profile
@@ -178,7 +179,7 @@ function renderOrders(orders) {
         </div>
         <h3>No orders yet</h3>
         <p>When you place an order, it'll show up right here.</p>
-        <a href="/products/" class="btn btn-primary" style="margin-top:var(--space-4)">Shop Now</a>
+        <a href="${pageUrl('products/')}" class="btn btn-primary" style="margin-top:var(--space-4)">Shop Now</a>
       </div>
     `;
   }
@@ -205,7 +206,7 @@ function renderOrders(orders) {
               <td style="font-size:var(--text-sm);color:var(--text-muted)">${(o.order_items || []).reduce((s, i) => s + i.quantity, 0)} items</td>
               <td style="font-weight:700;font-size:var(--text-sm)">${formatRWF(o.total_cents)}</td>
               <td>
-                <a href="/order-tracking/?token=${o.public_token}" class="btn btn-secondary btn-sm">Track</a>
+                <a href="${pageUrl('order-tracking/')}?token=${o.public_token}" class="btn btn-secondary btn-sm">Track</a>
               </td>
             </tr>
           `).join('')}
@@ -224,7 +225,7 @@ function renderWishlist(items) {
         </div>
         <h3>Wishlist is empty</h3>
         <p>Save products you love — tap the heart on any product to add it here.</p>
-        <a href="/products/" class="btn btn-primary" style="margin-top:var(--space-4)">Browse Products</a>
+        <a href="${pageUrl('products/')}" class="btn btn-primary" style="margin-top:var(--space-4)">Browse Products</a>
       </div>
     `;
   }
@@ -237,7 +238,7 @@ function renderWishlist(items) {
         const img = media.find(m => m.is_primary) || media[0];
         const minPrice = variants.length ? Math.min(...variants.map(v => v.price_cents)) : null;
         return `
-          <a href="/product/?slug=${p.slug}" class="product-card" style="text-decoration:none">
+          <a href="${pageUrl('product/')}?slug=${p.slug}" class="product-card" style="text-decoration:none">
             <div class="product-card-image">
               <img src="${img?.url || ''}" alt="${p.name}" loading="lazy" width="300" height="400"
                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22400%22%3E%3Crect width=%22300%22 height=%22400%22 fill=%22%23161616%22/%3E%3C/svg%3E'">

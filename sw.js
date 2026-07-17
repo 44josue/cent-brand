@@ -1,19 +1,23 @@
 const CACHE_VERSION = 'cent-v4';
 
+// Base path this worker is scoped to — '/' locally, '/cent-brand/' on GitHub Pages
+const BASE = new URL(self.registration.scope).pathname;
+const OFFLINE_URL = `${BASE}offline.html`;
+
 // Static assets that rarely change — cache aggressively
 const STATIC_ASSETS = [
-  '/',
-  '/css/tokens.css',
-  '/css/reset.css',
-  '/css/global.css',
-  '/css/components.css',
-  '/css/nav.css',
-  '/css/footer.css',
-  '/products/',
-  '/cart/',
-  '/account/',
-  '/order-tracking/',
-  '/offline.html',
+  BASE,
+  `${BASE}css/tokens.css`,
+  `${BASE}css/reset.css`,
+  `${BASE}css/global.css`,
+  `${BASE}css/components.css`,
+  `${BASE}css/nav.css`,
+  `${BASE}css/footer.css`,
+  `${BASE}products/`,
+  `${BASE}cart/`,
+  `${BASE}account/`,
+  `${BASE}order-tracking/`,
+  OFFLINE_URL,
 ];
 
 // Install: pre-cache critical shell assets
@@ -59,8 +63,9 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Product images (product-images bucket) — cache first, long TTL
-  if (url.pathname.includes('/storage/v1/object/public/product-images/')) {
+  // Storage images — cache first, long TTL
+  if (url.pathname.includes('/storage/v1/object/public/product-images/') ||
+      url.pathname.includes('/storage/v1/object/public/cms-images/')) {
     e.respondWith(cacheFirst(e.request, 'cent-images'));
     return;
   }
@@ -111,7 +116,7 @@ async function networkFirst(request) {
     const cached = await cache.match(request);
     if (cached) return cached;
     // Return offline page for navigation requests
-    const offline = await cache.match('/offline.html');
+    const offline = await cache.match(OFFLINE_URL);
     return offline || new Response('<h1>You are offline</h1>', {
       headers: { 'Content-Type': 'text/html' }
     });

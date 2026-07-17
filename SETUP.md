@@ -81,19 +81,67 @@ To change the hero image, set the `image_url` field for the `hero` section to a 
 
 ---
 
+## CMS site images (home & about)
+
+Section photos (home **Every Cent Matters**, about story/mission blocks) are managed at **Admin → CMS → Site Images**.
+
+- Upload JPEG/PNG/WebP/GIF files to the **`cms-images`** bucket (public).
+- Toggle up to **3** images as **live** and assign each to exactly one section.
+- Metadata is stored in `site_sections` row `cms_media_library` (JSON `body.images`).
+
+If uploads fail with a storage error, confirm the bucket and policies below exist.
+
+---
+
 ## Supabase Storage Buckets
 
-Two buckets are used. Verify they exist in your Supabase project under **Storage**:
+Verify these buckets exist in your Supabase project under **Storage**:
 
 | Bucket name | Access | Used for |
 |---|---|---|
 | `product-images` | **Public** | Product photos, collab logos/banners |
+| `cms-images` | **Public** | CMS section images (home/about) |
 | `payment-proofs` | **Private** | Customer payment screenshots (admin only) |
 
-If they don't exist, create them in the Supabase dashboard:
-1. Go to **Storage → New bucket**
-2. For `product-images`: check **Public bucket**
-3. For `payment-proofs`: leave public unchecked
+### Create `cms-images` manually (if missing)
+
+In **Storage → New bucket**:
+
+1. Name: `cms-images`
+2. Check **Public bucket**
+3. Save
+
+Then in **SQL Editor**, run:
+
+```sql
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('cms-images', 'cms-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+CREATE POLICY "public read cms images"
+ON storage.objects FOR SELECT TO public
+USING (bucket_id = 'cms-images');
+
+CREATE POLICY "auth upload cms images"
+ON storage.objects FOR INSERT TO public
+WITH CHECK (bucket_id = 'cms-images' AND auth.role() = 'authenticated');
+
+CREATE POLICY "auth delete cms images"
+ON storage.objects FOR DELETE TO public
+USING (bucket_id = 'cms-images' AND auth.role() = 'authenticated');
+```
+
+Seed the CMS library row (once):
+
+```sql
+INSERT INTO site_sections (key, title, body, is_active)
+VALUES ('cms_media_library', 'CMS media library', '{"images":[]}', true)
+ON CONFLICT (key) DO NOTHING;
+```
+
+If they don't exist, create other buckets in the dashboard:
+1. For `product-images`: check **Public bucket**
+2. For `payment-proofs`: leave public unchecked
 
 ---
 
@@ -115,8 +163,9 @@ const SUPABASE_ANON_KEY = 'your-anon-key-here';
 Before going live:
 
 - [ ] Add logo/favicon to all HTML `<head>` tags
-- [ ] Confirm `product-images` bucket is set to **public** in Supabase
+- [ ] Confirm `product-images` and `cms-images` buckets are **public** in Supabase
 - [ ] Confirm `payment-proofs` bucket is **private**
+- [ ] Confirm `site_sections` row `cms_media_library` exists (see CMS site images above)
 - [ ] Set Supabase Auth **Site URL** to your production domain (e.g. `https://cent.rw`)
 - [ ] Set Supabase Auth **Redirect URLs** to include `https://cent.rw/**`
 - [ ] Add your domain to Supabase Auth allowed origins

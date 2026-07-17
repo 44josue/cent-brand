@@ -601,6 +601,87 @@ export async function deleteFaqItem(id) {
   if (error) throw error;
 }
 
+// ── CMS SITE IMAGES ───────────────────────────────────────────────────────────
+
+export const CMS_IMAGE_SECTIONS = [
+  { key: 'every_cent_matters', label: 'Home — Every Cent Matters' },
+  { key: 'about_story', label: 'About — Born from the streets of Kigali' },
+  { key: 'about_mission', label: 'About — Authentic. Affordable. Unapologetic.' },
+];
+
+const CMS_MEDIA_KEY = 'cms_media_library';
+const MAX_LIVE_CMS_IMAGES = 3;
+
+function parseCmsMediaBody(body) {
+  if (!body) return [];
+  try {
+    const parsed = JSON.parse(body);
+    return Array.isArray(parsed.images) ? parsed.images : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Admin: full media library (includes non-live). */
+export async function getCmsMediaLibrary() {
+  const { data, error } = await supabase
+    .from('site_sections')
+    .select('body')
+    .eq('key', CMS_MEDIA_KEY)
+    .maybeSingle();
+  if (error) throw error;
+  return parseCmsMediaBody(data?.body);
+}
+
+/** Storefront: live images keyed by section (max 3 live total). */
+export async function getLiveCmsImagesBySection() {
+  const { data } = await supabase
+    .from('site_sections')
+    .select('body')
+    .eq('key', CMS_MEDIA_KEY)
+    .eq('is_active', true)
+    .maybeSingle();
+  const images = parseCmsMediaBody(data?.body);
+  const map = {};
+  for (const img of images) {
+    if (img.is_live && img.section_key && img.url) {
+      map[img.section_key] = img.url;
+    }
+  }
+  return map;
+}
+
+export async function saveCmsMediaLibrary(images) {
+  const liveCount = images.filter(i => i.is_live).length;
+  if (liveCount > MAX_LIVE_CMS_IMAGES) {
+    throw new Error(`At most ${MAX_LIVE_CMS_IMAGES} images can be live on the site.`);
+  }
+  const usedSections = new Set();
+  for (const img of images) {
+    if (!img.is_live || !img.section_key) continue;
+    if (usedSections.has(img.section_key)) {
+      throw new Error('Each section can only have one live image.');
+    }
+    usedSections.add(img.section_key);
+  }
+  await updateSiteSection(CMS_MEDIA_KEY, {
+    body: JSON.stringify({ images }),
+    is_active: true,
+    title: 'CMS media library',
+  });
+}
+
+export const CMS_IMAGES_BUCKET = 'cms-images';
+
+export async function uploadCmsImage(file) {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from(CMS_IMAGES_BUCKET).upload(path, file, { upsert: false });
+  if (error) throw error;
+  const { data: { publicUrl } } = supabase.storage.from(CMS_IMAGES_BUCKET).getPublicUrl(path);
+  return { url: publicUrl, storage_path: path };
+}
+
 // ── CUSTOMERS ─────────────────────────────────────────────────────────────────
 
 export async function getAdminGuestCustomers({ search } = {}) {

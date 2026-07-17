@@ -1,12 +1,15 @@
 // Only import modules with no supabase dependency so the nav always renders
 // even when the CDN is slow or unreachable on first load.
 // cart.js / auth.js / api.js are loaded dynamically after the nav is visible.
+// cookie-consent.js is loaded dynamically too — ad blockers commonly block any file
+// named "cookie-consent", and a static import here would fail the whole nav.js module
+// (and every page's script chain with it) if that one request gets blocked.
 import { toggleTheme, getTheme, initTheme, formatRWF, debounce } from '../lib/utils.js';
-import { initCookieConsent } from './cookie-consent.js';
+import { getBasePath, pageUrl, assetUrl } from '../lib/paths.js';
 
 export async function renderNav() {
   initTheme();
-  initCookieConsent();
+  import('./cookie-consent.js').then(({ initCookieConsent }) => initCookieConsent()).catch(() => {});
 
   const announcementBar = document.getElementById('announcement-bar');
   const navPlaceholder = document.getElementById('nav-placeholder');
@@ -18,8 +21,7 @@ export async function renderNav() {
 
   // 1. Dynamically find your repository base path
   // If on GitHub Pages, it yields '/cent-brand/', otherwise it safely defaults to '/' for local servers
-  const isGitHubPages = window.location.hostname.includes('github.io');
-  const basePath = isGitHubPages ? '/cent-brand/' : '/';
+  const basePath = getBasePath();
 
   navPlaceholder.innerHTML = `
     <nav class="navbar" role="navigation" aria-label="Main navigation">
@@ -29,18 +31,18 @@ export async function renderNav() {
         <ul class="nav-left nav-links" role="list">
           <li><a href="${basePath}" ${currentPath === basePath || currentPath === basePath + 'index.html' ? 'class="active"' : ''}>Home</a></li>
           <li><a href="${basePath}products/" ${currentPath.includes('/products') ? 'class="active"' : ''}>Shop</a></li>
+          <li><a href="${basePath}about/" ${currentPath.includes('/about') ? 'class="active"' : ''}>About</a></li>
         </ul>
 
         <!-- Center logo -->
         <a href="${basePath}" class="nav-logo" aria-label="CENT Home">
-          <img src="${basePath}assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark">
-          <img src="${basePath}assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light">
+          <img src="${assetUrl('assets/images/black logo.png')}" alt="CENT" class="nav-logo-img nav-logo-dark">
+          <img src="${assetUrl('assets/images/white logo.png')}" alt="CENT" class="nav-logo-img nav-logo-light">
         </a>
 
         <!-- Right links + actions -->
         <div class="nav-right">
           <ul class="nav-links" role="list">
-            <li><a href="${basePath}about/" ${currentPath.includes('/about') ? 'class="active"' : ''}>About</a></li>
             <li><a href="${basePath}contact/" ${currentPath.includes('/contact') ? 'class="active"' : ''}>Contact</a></li>
           </ul>
 
@@ -88,8 +90,8 @@ export async function renderNav() {
     <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
       <div class="mobile-nav-header">
         <a href="${basePath}" class="nav-logo" aria-label="CENT Home">
-          <img src="${basePath}assets/images/black logo.png" alt="CENT" class="nav-logo-img nav-logo-dark" height="44">
-          <img src="${basePath}assets/images/white logo.png" alt="CENT" class="nav-logo-img nav-logo-light" height="44">
+          <img src="${assetUrl('assets/images/black logo.png')}" alt="CENT" class="nav-logo-img nav-logo-dark" height="44">
+          <img src="${assetUrl('assets/images/white logo.png')}" alt="CENT" class="nav-logo-img nav-logo-light" height="44">
         </a>
         <button class="nav-icon-btn" id="mobile-nav-close" aria-label="Close menu">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,7 +248,7 @@ async function loadAuthState() {
 
     if (['admin', 'ops'].includes(profile.role)) {
       const btn = document.getElementById('account-btn');
-      if (btn) { btn.href = '../admin/'; btn.title = 'Admin Dashboard'; }
+      if (btn) { btn.href = pageUrl('admin/'); btn.title = 'Admin Dashboard'; }
     }
 
     // Pending order pulse dot

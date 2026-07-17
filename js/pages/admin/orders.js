@@ -1,6 +1,7 @@
 import { renderAdminShell } from '../../components/admin-shell.js';
 import { getAdminOrders, callEdge } from '../../lib/api.js';
 import { formatRWF, formatDate, statusBadge, shortToken, getParam, setParams, toast, initTheme } from '../../lib/utils.js';
+import { pageUrl } from '../../lib/paths.js';
 
 initTheme();
 renderAdminShell('Orders', renderPage);
@@ -101,7 +102,7 @@ async function loadOrders(container) {
                 <td>${statusBadge(o.status)}</td>
                 <td style="font-size:var(--text-xs);color:var(--text-muted)">${o.payment_channels?.name || '—'}</td>
                 <td style="font-weight:700;font-size:var(--text-sm)">${formatRWF(o.total_cents)}</td>
-                <td><a href="/admin/order-detail/?token=${o.public_token}" class="btn btn-secondary btn-sm">View</a></td>
+                <td><a href="${pageUrl('admin/order-detail/')}?token=${o.public_token}" class="btn btn-secondary btn-sm">View</a></td>
               </tr>
             `).join('')}
           </tbody>

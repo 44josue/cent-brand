@@ -5,6 +5,7 @@ import { callEdge } from '../lib/api.js';
 import { formatRWF, getParam, toast, copyToClipboard, shortToken } from '../lib/utils.js';
 import { updateCartBadges, clearLocalCart } from '../lib/cart.js';
 import { supabase } from '../lib/supabase.js';
+import { pageUrl } from '../lib/paths.js';
 
 renderNav();
 renderFooter();
@@ -14,7 +15,7 @@ const orderId = getParam('order_id');
 const token = getParam('token');
 let totalCents = parseInt(getParam('total') || '0');
 
-if (!orderId || !token) { window.location.href = '/'; }
+if (!orderId || !token) { window.location.href = pageUrl(); }
 else { init(); }
 
 let selectedChannelId = null;
@@ -277,7 +278,7 @@ async function handleSubmit(e) {
     });
 
     await clearLocalCart();
-    window.location.href = `/order-tracking/?token=${token}&submitted=1`;
+    window.location.href = `${pageUrl('order-tracking/')}?token=${token}&submitted=1`;
 
   } catch (err) {
     console.error('submit-payment error:', err);

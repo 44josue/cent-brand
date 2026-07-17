@@ -3,6 +3,7 @@ import { renderFooter } from '../components/footer.js';
 import { validatePromoCode } from '../lib/api.js';
 import { formatRWF, toast } from '../lib/utils.js';
 import { syncCart, setCartItemQty, removeFromCart, updateCartBadges } from '../lib/cart.js';
+import { pageUrl } from '../lib/paths.js';
 
 renderNav();
 renderFooter();
@@ -28,7 +29,7 @@ function renderCart() {
         <div style="font-size:4rem;margin-bottom:var(--space-4)">○</div>
         <h3>Your cart is empty</h3>
         <p>Looks like you haven't added anything yet.</p>
-        <a href="/products/" class="btn btn-primary" style="margin-top:var(--space-4)">Start Shopping</a>
+        <a href="${pageUrl('products/')}" class="btn btn-primary" style="margin-top:var(--space-4)">Start Shopping</a>
       </div>
     `;
     return;
@@ -44,7 +45,7 @@ function renderCart() {
         <div id="cart-items">
           ${cartState.items.map(cartItemRow).join('')}
         </div>
-        <a href="/products/" class="btn btn-ghost" style="margin-top:var(--space-4)">← Continue Shopping</a>
+        <a href="${pageUrl('products/')}" class="btn btn-ghost" style="margin-top:var(--space-4)">← Continue Shopping</a>
       </div>
 
       <div class="order-summary">
@@ -76,7 +77,7 @@ function renderCart() {
           <span class="order-summary-total">${formatRWF(total)}</span>
         </div>
 
-        <a href="/checkout/" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-6)">
+        <a href="${pageUrl('checkout/')}" class="btn btn-primary btn-lg w-full" style="margin-top:var(--space-6)">
           Proceed to Checkout
         </a>
 

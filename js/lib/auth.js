@@ -1,5 +1,6 @@
 import { supabase } from './supabase.js';
 import { toast } from './utils.js';
+import { pageUrl } from './paths.js';
 
 // ── SESSION ───────────────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export async function getCurrentProfile() {
 
 // ── ROLE CHECK ────────────────────────────────────────────────────────────────
 
-export async function requireAuth(redirectTo = '/login/') {
+export async function requireAuth(redirectTo = pageUrl('login/')) {
   const user = await getUser();
   if (!user) {
     window.location.href = `${redirectTo}?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
@@ -42,13 +43,13 @@ export async function requireAuth(redirectTo = '/login/') {
 export async function requireAdmin() {
   const user = await getUser();
   if (!user) {
-    window.location.href = `/login/?redirect=${encodeURIComponent(window.location.pathname)}`;
+    window.location.href = `${pageUrl('login/')}?redirect=${encodeURIComponent(window.location.pathname)}`;
     return null;
   }
 
   const profile = await getProfile(user.id);
   if (!profile || !['admin', 'ops'].includes(profile.role)) {
-    window.location.href = '/login/';
+    window.location.href = pageUrl('login/');
     return null;
   }
 
@@ -88,17 +89,9 @@ export async function signOut() {
   localStorage.removeItem('cent_cart');
 }
 
-export async function signInWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: `${window.location.origin}/account/` },
-  });
-  if (error) throw error;
-}
-
 export async function sendPasswordReset(email) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/login/?mode=reset`,
+    redirectTo: `${window.location.origin}${pageUrl('login/')}?mode=reset`,
   });
   if (error) throw error;
 }

@@ -4,7 +4,7 @@ body {
   color: var(--text-primary);
   background-color: var(--bg-base);
   min-height: 100vh;
-  overflow-x: hidden;
+  padding-top: var(--nav-height);
   transition: background-color var(--transition-slow), color var(--transition-slow);
 }
 

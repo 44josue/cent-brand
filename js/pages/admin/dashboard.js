@@ -1,6 +1,7 @@
 import { renderAdminShell } from '../../components/admin-shell.js';
 import { getDashboardStats, getAdminOrders } from '../../lib/api.js';
 import { formatRWF, formatDate, statusBadge, shortToken, initTheme } from '../../lib/utils.js';
+import { pageUrl } from '../../lib/paths.js';
 
 initTheme();
 
@@ -29,7 +30,7 @@ async function renderPage(container) {
       <div style="margin-top:var(--space-8)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">
           <h2 style="font-size:var(--text-xl)">Recent Orders</h2>
-          <a href="/admin/orders/" class="btn btn-secondary btn-sm">View All</a>
+          <a href="${pageUrl('admin/orders/')}" class="btn btn-secondary btn-sm">View All</a>
         </div>
         <div id="recent-orders">
           <div class="skeleton skeleton-rows" style="border-radius:var(--radius-lg)"></div>
@@ -82,7 +83,7 @@ async function loadStats() {
         <div class="stat-label">Awaiting Verification</div>
         <div class="stat-value">${pending}</div>
         <div class="stat-sub">${pending > 0
-          ? `<a href="/admin/orders/?status=awaiting_payment_verification" style="color:var(--warning);font-weight:600">Review ${pending} payment${pending !== 1 ? 's' : ''} →</a>`
+          ? `<a href="${pageUrl('admin/orders/')}?status=awaiting_payment_verification" style="color:var(--warning);font-weight:600">Review ${pending} payment${pending !== 1 ? 's' : ''} →</a>`
           : 'All clear'
         }</div>
       </div>
@@ -125,7 +126,7 @@ async function loadRecentOrders() {
                 <td style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(o.created_at)}</td>
                 <td>${statusBadge(o.status)}</td>
                 <td style="font-weight:700;font-size:var(--text-sm)">${formatRWF(o.total_cents)}</td>
-                <td><a href="/admin/order-detail/?token=${o.public_token}" class="btn btn-secondary btn-sm">View</a></td>
+                <td><a href="${pageUrl('admin/order-detail/')}?token=${o.public_token}" class="btn btn-secondary btn-sm">View</a></td>
               </tr>
             `).join('')}
           </tbody>

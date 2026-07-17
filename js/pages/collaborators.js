@@ -2,6 +2,7 @@ import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { getCollaborators } from '../lib/api.js';
 import { initTheme } from '../lib/utils.js';
+import { pageUrl } from '../lib/paths.js';
 
 initTheme();
 renderNav();
@@ -24,7 +25,7 @@ async function init() {
     }
 
     grid.innerHTML = collabs.map(c => `
-      <a href="/products/?collab=${c.slug}" class="collab-card">
+      <a href="${pageUrl('products/')}?collab=${c.slug}" class="collab-card">
         ${c.banner_url
           ? `<img src="${c.banner_url}" alt="${c.name}" class="collab-banner" loading="lazy" onerror="this.style.display='none'">`
           : `<div class="collab-banner-placeholder">

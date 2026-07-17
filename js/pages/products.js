@@ -1,6 +1,7 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { formatRWF, getParam, setParams, debounce, toast } from '../lib/utils.js';
+import { pageUrl } from '../lib/paths.js';
 
 renderNav();
 renderFooter();
@@ -203,12 +204,12 @@ function productCard(p) {
   const hasMultiple = p.maxPrice && p.maxPrice !== p.minPrice;
   const images = (p.media || []).filter(m => !m.url?.match(/\.(mp4|webm|mov)$/i));
   const hasSlider = images.length > 1;
-  const placeholder = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='533'%3E%3Crect width='400' height='533' fill='%23161616'/%3E%3C/svg%3E`;
+  const placeholder = `data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22533%22%3E%3Crect width=%22400%22 height=%22533%22 fill=%22%23161616%22/%3E%3C/svg%3E`;
 
   return `
     <article class="product-card" role="article" data-id="${p.id}">
       <div class="product-card-image" style="position:relative">
-        <a href="/product/?slug=${p.slug}" class="product-card-img-link" tabindex="-1">
+        <a href="${pageUrl(`product/?slug=${p.slug}`)}" class="product-card-img-link" tabindex="-1">
           ${hasSlider ? `
             <div class="card-slider" data-idx="0">
               ${images.map((m, i) => `
@@ -237,7 +238,7 @@ function productCard(p) {
       </div>
 
       <div class="product-card-body">
-        <a href="/product/?slug=${p.slug}" class="product-card-info" style="display:block;text-decoration:none">
+        <a href="${pageUrl(`product/?slug=${p.slug}`)}" class="product-card-info" style="display:block;text-decoration:none">
           <div class="product-card-name">${p.name}</div>
           ${p.collaborator ? `<div class="product-card-collab">x ${p.collaborator.brand_name || p.collaborator.name}</div>` : ''}
           ${p.description ? `<p class="product-card-desc">${p.description.slice(0, 80)}${p.description.length > 80 ? '…' : ''}</p>` : ''}
@@ -247,7 +248,7 @@ function productCard(p) {
               : '<span style="color:var(--text-muted);font-size:var(--text-xs)">No price set</span>'}
           </div>
         </a>
-        <a href="/product/?slug=${p.slug}" class="product-card-cta ${!p.inStock ? 'oos' : ''}">
+        <a href="${pageUrl(`product/?slug=${p.slug}`)}" class="product-card-cta ${!p.inStock ? 'oos' : ''}">
           ${!p.inStock ? 'Sold Out' : 'Shop Now'}
         </a>
       </div>
