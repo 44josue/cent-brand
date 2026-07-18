@@ -2,9 +2,10 @@ import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { initTheme, formatRWF, toast, modal } from '../lib/utils.js';
 import { pageUrl } from '../lib/paths.js';
+import { trackScrollPosition, restoreScrollPosition } from '../lib/page-state.js';
 
 // These are filled after dynamic imports resolve
-let getProducts, getCategories, getSiteSection, getCollaborators;
+let getProducts, getCategories, getSiteSection, getCollaborators, getLiveCmsImagesBySection;
 let addToCart, updateCartBadges, getLocalCart;
 
 // Render nav/footer immediately — no supabase dependency at parse time
@@ -20,12 +21,12 @@ Promise.all([
   ({ getProducts, getCategories, getSiteSection, getCollaborators, getLiveCmsImagesBySection } = api);
   ({ addToCart, updateCartBadges, getLocalCart } = cart);
   updateCartBadges();
-  loadHomeLayout();
-  loadCategories();
-  loadCmsContent();
   initNewsletterForm();
   initCartDrawer();
-}).catch(() => {
+  trackScrollPosition();
+  Promise.all([loadHomeLayout(), loadCategories(), loadCmsContent()]).then(() => restoreScrollPosition());
+}).catch((err) => {
+  console.error('home.js init failed:', err);
   const grid = document.getElementById('featured-grid');
   if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:var(--space-12);color:var(--text-muted)">Could not connect — <button class="btn btn-secondary btn-sm" onclick="location.reload()">Retry</button></div>`;
 });
@@ -63,7 +64,7 @@ async function loadFeaturedProducts() {
   if (!grid) return;
 
   try {
-    carouselProducts = await getProducts({ featured: true, limit: 9 });
+    carouselProducts = await getProducts({ featured: true, limit: 3 });
     if (!carouselProducts.length) {
       grid.innerHTML = `
         <div style="grid-column:1/-1;padding:var(--space-12) var(--space-6);text-align:center">

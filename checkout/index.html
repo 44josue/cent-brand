@@ -155,6 +155,14 @@
 
         <div class="order-summary">
           <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-4)">Order Summary</h3>
+          <div class="input-group" style="margin-bottom:var(--space-4)">
+            <label for="promo-input">Promo Code</label>
+            <div style="display:flex;gap:var(--space-2)">
+              <input type="text" id="promo-input" class="input" placeholder="e.g. QATEST10" style="text-transform:uppercase;flex:1">
+              <button type="button" class="btn btn-secondary btn-sm" id="promo-apply-btn">Apply</button>
+            </div>
+            <span id="promo-msg" style="display:none;font-size:var(--text-xs);margin-top:var(--space-1)"></span>
+          </div>
           <div id="checkout-summary">
             <div class="skeleton skeleton-text"></div>
             <div class="skeleton skeleton-text"></div>

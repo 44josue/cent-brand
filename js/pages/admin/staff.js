@@ -117,11 +117,11 @@ async function loadStaff() {
           <tbody>
             ${staff.map(s => `
               <tr>
-                <td style="font-weight:600">${s.full_name || '—'}</td>
-                <td style="font-size:var(--text-sm);color:var(--text-muted)">${s.email}</td>
-                <td><span class="badge ${s.role === 'admin' ? 'badge-warning' : 'badge-default'}">${s.role}</span></td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(s.created_at)}</td>
-                <td>
+                <td data-label="Name" style="font-weight:600">${s.full_name || '—'}</td>
+                <td data-label="Email" style="font-size:var(--text-sm);color:var(--text-muted)">${s.email}</td>
+                <td data-label="Role"><span class="badge ${s.role === 'admin' ? 'badge-warning' : 'badge-default'}">${s.role}</span></td>
+                <td data-label="Since" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(s.created_at)}</td>
+                <td data-label="Actions">
                   <button class="btn btn-ghost btn-sm demote-btn" data-id="${s.id}" style="color:var(--error)">Remove Role</button>
                 </td>
               </tr>

@@ -90,10 +90,10 @@ async function loadChannels() {
           <tbody>
             ${channels.map(c => `
               <tr>
-                <td style="font-weight:600">${c.name}</td>
-                <td style="font-size:var(--text-sm);color:var(--text-muted)">${c.number || '—'}</td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.instructions || '—'}</td>
-                <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-default'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
+                <td data-label="Name" style="font-weight:600">${c.name}</td>
+                <td data-label="Number" style="font-size:var(--text-sm);color:var(--text-muted)">${c.number || '—'}</td>
+                <td data-label="Instructions" style="font-size:var(--text-xs);color:var(--text-muted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.instructions || '—'}</td>
+                <td data-label="Status"><span class="badge ${c.is_active ? 'badge-success' : 'badge-default'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
                 <td>
                   <div style="display:flex;gap:var(--space-2)">
                     <button class="btn btn-secondary btn-sm edit-ch-btn" data-id="${c.id}">Edit</button>

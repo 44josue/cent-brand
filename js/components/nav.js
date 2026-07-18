@@ -107,7 +107,11 @@ export async function renderNav() {
         <a href="${basePath}contact/" ${currentPath.includes('/contact') ? 'class="active"' : ''}>Contact</a>
         <div class="mobile-nav-divider"></div>
         <a href="${basePath}account/" ${currentPath.includes('/account') ? 'class="active"' : ''}>Account</a>
-        <a href="${basePath}cart/" ${currentPath.includes('/cart') ? 'class="active"' : ''}>Cart</a>
+        <a href="${basePath}cart/" ${currentPath.includes('/cart') ? 'class="active"' : ''} style="display:flex;align-items:center;justify-content:space-between">
+          <span>Cart</span>
+          <span class="cart-badge" aria-label="cart items" style="display:none;position:static">0</span>
+        </a>
+        <div id="mobile-nav-admin-slot"></div>
       </div>
       <div class="mobile-nav-footer">
         <div class="mobile-nav-actions">
@@ -116,10 +120,10 @@ export async function renderNav() {
       </div>
     </nav>
 
-    <!-- Search overlay -->
+    <!-- Search dropdown -->
     <div class="search-overlay hidden" id="search-overlay" role="dialog" aria-modal="true" aria-label="Search products">
-      <button style="position:absolute;top:var(--space-6);right:var(--space-6);background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer" id="search-close" aria-label="Close search">✕</button>
-      <div class="search-overlay-inner">
+      <button class="search-page-close" id="search-close" aria-label="Close search">✕</button>
+      <div class="search-panel">
         <div class="search-input-wrap">
           <input type="search" id="search-input" placeholder="Search products..." autocomplete="off" aria-label="Search products">
         </div>
@@ -142,8 +146,14 @@ export async function renderNav() {
   document.getElementById('mobile-nav-overlay')?.addEventListener('click', closeMobileNav);
 
   // Search
-  document.getElementById('search-btn')?.addEventListener('click', openSearch);
+  document.getElementById('search-btn')?.addEventListener('click', (e) => { e.stopPropagation(); openSearch(); });
   document.getElementById('search-close')?.addEventListener('click', closeSearch);
+
+  // Clicking anywhere outside the search panel closes it (but keeps whatever
+  // was typed so it's still there next time it's opened).
+  document.getElementById('search-overlay')?.addEventListener('mousedown', (e) => {
+    if (e.target.id === 'search-overlay') closeSearch();
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { closeMobileNav(); closeSearch(); }
@@ -191,19 +201,63 @@ function closeMobileNav() {
   document.body.classList.remove('nav-open');
 }
 
+const SEARCH_HISTORY_KEY = 'cent_search_history';
+const SEARCH_HISTORY_MAX = 8;
+const SEARCH_HISTORY_SHOWN = 5;
+
+function getSearchHistory() {
+  try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function addToSearchHistory(query) {
+  const q = query.trim();
+  if (!q) return;
+  let history = getSearchHistory().filter(h => h.toLowerCase() !== q.toLowerCase());
+  history.unshift(q);
+  history = history.slice(0, SEARCH_HISTORY_MAX);
+  try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history)); } catch { /* storage unavailable */ }
+}
+
 function openSearch() {
   document.getElementById('search-overlay')?.classList.remove('hidden');
-  document.getElementById('search-input')?.focus();
-  document.body.style.overflow = 'hidden';
+  const input = document.getElementById('search-input');
+  input?.focus();
+  // Re-show whatever state matches the current input value (typed text is
+  // preserved across opens/closes, so this restores results or history).
+  if (input && !input.value.trim()) renderSearchHistory();
 }
 
 function closeSearch() {
   document.getElementById('search-overlay')?.classList.add('hidden');
-  const res = document.getElementById('search-results');
-  const inp = document.getElementById('search-input');
-  if (res) res.innerHTML = '';
-  if (inp) inp.value = '';
-  document.body.style.overflow = '';
+  // Deliberately don't clear the input or results — if the user was mid-type
+  // and tapped outside by accident, reopening search should pick up right
+  // where they left off.
+}
+
+function renderSearchHistory() {
+  const results = document.getElementById('search-results');
+  if (!results) return;
+  const history = getSearchHistory().slice(0, SEARCH_HISTORY_SHOWN);
+  if (!history.length) { results.innerHTML = ''; return; }
+  results.innerHTML = `
+    <div class="search-history-label">Recent Searches</div>
+    ${history.map(q => `
+      <button type="button" class="search-history-item" data-query="${q.replace(/"/g, '&quot;')}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        <span>${q}</span>
+      </button>
+    `).join('')}
+  `;
+  results.querySelectorAll('.search-history-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById('search-input');
+      if (!input) return;
+      input.value = btn.dataset.query;
+      input.dispatchEvent(new Event('input'));
+      input.focus();
+    });
+  });
 }
 
 function initSearch() {
@@ -212,7 +266,7 @@ function initSearch() {
   if (!input || !results) return;
 
   const doSearch = debounce(async (q) => {
-    if (!q.trim()) { results.innerHTML = ''; return; }
+    if (!q.trim()) { renderSearchHistory(); return; }
     results.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">Searching...</p>';
     try {
       const { searchProducts } = await import('../lib/api.js');
@@ -222,7 +276,7 @@ function initSearch() {
         return;
       }
       results.innerHTML = products.map(p => `
-        <a href="../product/?slug=${p.slug}" class="search-result-item" onclick="document.getElementById('search-overlay').classList.add('hidden');document.body.style.overflow=''">
+        <a href="${pageUrl(`product/?slug=${p.slug}`)}" class="search-result-item" data-query="${q.replace(/"/g, '&quot;')}">
           <img src="${p.primaryImage || ''}" alt="${p.name}" class="search-result-img" loading="lazy"
             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2264%22%3E%3Crect width=%2248%22 height=%2264%22 fill=%22%23161616%22/%3E%3C/svg%3E'">
           <div>
@@ -232,12 +286,21 @@ function initSearch() {
           </div>
         </a>
       `).join('');
+      results.querySelectorAll('.search-result-item').forEach(a => {
+        a.addEventListener('click', () => addToSearchHistory(a.dataset.query));
+      });
     } catch {
       results.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">Search failed.</p>';
     }
   }, 300);
 
   input.addEventListener('input', (e) => doSearch(e.target.value));
+  input.addEventListener('focus', () => { if (!input.value.trim()) renderSearchHistory(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && input.value.trim()) addToSearchHistory(input.value);
+  });
+
+  if (!input.value.trim()) renderSearchHistory();
 }
 
 async function loadAuthState() {
@@ -249,6 +312,8 @@ async function loadAuthState() {
     if (['admin', 'ops'].includes(profile.role)) {
       const btn = document.getElementById('account-btn');
       if (btn) { btn.href = pageUrl('admin/'); btn.title = 'Admin Dashboard'; }
+      const slot = document.getElementById('mobile-nav-admin-slot');
+      if (slot) slot.innerHTML = `<a href="${pageUrl('admin/')}">Admin Dashboard</a>`;
     }
 
     // Pending order pulse dot

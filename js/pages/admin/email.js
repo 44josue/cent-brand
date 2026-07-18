@@ -1,6 +1,16 @@
 import { renderAdminShell } from '../../components/admin-shell.js';
 import { supabase } from '../../lib/supabase.js';
 import { toast, initTheme } from '../../lib/utils.js';
+import { getCurrentProfile } from '../../lib/auth.js';
+
+function buildSignature(profile, mode) {
+  const closing = Math.random() < 0.5 ? 'Best regards,' : 'Yours sincerely,';
+  const lines = [profile?.full_name, profile?.job_title, profile?.email, profile?.phone].filter(Boolean);
+  if (mode === 'html') {
+    return `<p style="color:#a3a3a3;margin:28px 0 0;line-height:1.7;font-size:14px">${closing}<br>${lines.map(l => `<span style="color:#f5f5f5">${l}</span>`).join('<br>')}</p>`;
+  }
+  return lines.length ? `\n\n${closing}\n${lines.join('\n')}` : '';
+}
 
 initTheme();
 renderAdminShell('Email', renderPage);
@@ -86,9 +96,10 @@ const TEMPLATES = {
 };
 
 async function renderPage(container) {
-  const [{ data: profiles }, { data: guests }] = await Promise.all([
+  const [{ data: profiles }, { data: guests }, adminProfile] = await Promise.all([
     supabase.from('profiles').select('id, full_name, email').order('full_name'),
     supabase.from('customers').select('id, guest_name, guest_email').eq('is_guest', true).order('guest_name'),
+    getCurrentProfile(),
   ]);
 
   const seen = new Set();
@@ -380,11 +391,12 @@ async function renderPage(container) {
   // Preview
   document.getElementById('preview-html-btn')?.addEventListener('click', () => {
     const rawBody = document.getElementById('email-body').value;
-    let previewContent = rawBody;
+    let previewContent = rawBody + buildSignature(adminProfile, 'html');
     if (bodyMode === 'plain') {
+      const bodyWithSignature = rawBody + buildSignature(adminProfile, 'plain');
       previewContent = `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#0a0a0a;color:#a3a3a3;font-size:15px;line-height:1.7">
         <div style="text-align:center;padding-bottom:20px;border-bottom:1px solid #222;margin-bottom:24px"><span style="font-family:Arial Black,sans-serif;font-size:24px;font-weight:900;letter-spacing:0.15em;color:#f5f5f5">CENT</span></div>
-        ${rawBody.split('\n').map(l => l.trim() ? `<p style="margin:0 0 14px">${l}</p>` : '').join('')}
+        ${bodyWithSignature.split('\n').map(l => l.trim() ? `<p style="margin:0 0 14px">${l}</p>` : '').join('')}
       </div>`;
     }
     document.getElementById('preview-frame').srcdoc = previewContent;
@@ -416,9 +428,10 @@ async function renderPage(container) {
       recipients = emails.map(e => ({ email: e, name: '' }));
     }
 
-    // Wrap plain text in branded template
+    // Wrap plain text in branded template, with the sender's signature appended
     let finalBody = body;
     if (bodyMode === 'plain') {
+      const bodyWithSignature = body + buildSignature(adminProfile, 'plain');
       finalBody = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#0a0a0a;font-family:'Inter',sans-serif">
 <div style="max-width:560px;margin:0 auto;padding:24px 16px">
   <div style="background:#111;border:1px solid #222;border-radius:12px;overflow:hidden">
@@ -426,13 +439,15 @@ async function renderPage(container) {
       <span style="font-family:'Arial Black',sans-serif;font-size:28px;font-weight:900;letter-spacing:0.15em;color:#f5f5f5">CENT</span>
     </div>
     <div style="padding:32px;color:#a3a3a3;font-size:15px;line-height:1.7">
-      ${body.split('\n').map(l => l.trim() ? `<p style="margin:0 0 14px">${l}</p>` : '').join('')}
+      ${bodyWithSignature.split('\n').map(l => l.trim() ? `<p style="margin:0 0 14px">${l}</p>` : '').join('')}
     </div>
     <div style="padding:20px 32px;border-top:1px solid #1f1f1f;text-align:center">
       <p style="color:#525252;font-size:12px;margin:0">CENT Streetwear — Kigali, Rwanda &middot; <a href="https://cent.rw" style="color:#777;text-decoration:none">cent.rw</a></p>
     </div>
   </div>
 </div></body></html>`;
+    } else {
+      finalBody = body + buildSignature(adminProfile, 'html');
     }
 
     if (!confirm(`Send "${subject}" to ${recipients.length} recipient${recipients.length !== 1 ? 's' : ''}? This cannot be undone.`)) return;
@@ -443,7 +458,7 @@ async function renderPage(container) {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: { subject, previewText, body: finalBody, recipients, attachments },
+        body: { subject, previewText, body: finalBody, recipients, recipientMode, attachments },
       });
       if (error) throw error;
       toast.success(`Sent to ${data?.sent ?? recipients.length} recipient${recipients.length !== 1 ? 's' : ''}.`);
@@ -471,8 +486,8 @@ async function loadEmailLog() {
   if (!el) return;
   const { data } = await supabase
     .from('email_logs')
-    .select('id, subject, recipient_count, sent_at, status')
-    .order('sent_at', { ascending: false })
+    .select('id, subject, recipient_count, created_at')
+    .order('created_at', { ascending: false })
     .limit(10);
 
   if (!data?.length) {
@@ -483,14 +498,13 @@ async function loadEmailLog() {
   el.innerHTML = `
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Subject</th><th>Recipients</th><th>Status</th><th>Sent</th></tr></thead>
+        <thead><tr><th>Subject</th><th>Recipients</th><th>Sent</th></tr></thead>
         <tbody>
           ${data.map(row => `
             <tr>
-              <td style="font-size:var(--text-sm);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${row.subject}</td>
-              <td style="font-size:var(--text-sm)">${row.recipient_count ?? '—'}</td>
-              <td><span class="badge ${row.status === 'sent' ? 'badge-success' : 'badge-error'}">${row.status}</span></td>
-              <td style="font-size:var(--text-xs);color:var(--text-muted)">${row.sent_at ? new Date(row.sent_at).toLocaleString() : '—'}</td>
+              <td data-label="Subject" style="font-size:var(--text-sm);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${row.subject}</td>
+              <td data-label="Recipients" style="font-size:var(--text-sm)">${row.recipient_count ?? '—'}</td>
+              <td data-label="Sent" style="font-size:var(--text-xs);color:var(--text-muted)">${row.created_at ? new Date(row.created_at).toLocaleString() : '—'}</td>
             </tr>
           `).join('')}
         </tbody>

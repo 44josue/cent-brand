@@ -256,16 +256,16 @@ async function handleSubmit(e) {
   btn.innerHTML = '<span class="spinner"></span> Submitting...';
 
   try {
-    let proofUrl = null;
+    let proofPath = null;
 
     // Upload proof if provided
     if (proofFile) {
       const ext = proofFile.name.split('.').pop();
-      const path = `payment-proofs/${orderId}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(path, proofFile);
-      if (!uploadError) {
-        const { data } = supabase.storage.from('payment-proofs').getPublicUrl(path);
-        proofUrl = data.publicUrl;
+      proofPath = `${orderId}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(proofPath, proofFile);
+      if (uploadError) {
+        console.error('proof upload error:', uploadError);
+        proofPath = null;
       }
     }
 
@@ -275,6 +275,7 @@ async function handleSubmit(e) {
       payerPhone,
       referenceCode: refCode,
       amountPaidCents: payOnArrival ? 0 : totalCents,
+      proofPath,
     });
 
     await clearLocalCart();

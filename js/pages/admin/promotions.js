@@ -188,21 +188,21 @@ async function loadPromos() {
           <tbody>
             ${promos.map(p => `
               <tr>
-                <td>
+                <td data-label="Code">
                   <div style="font-weight:700;font-size:var(--text-sm)">${p.code}</div>
                   ${p.description ? `<div style="font-size:var(--text-xs);color:var(--text-muted)">${p.description}</div>` : ''}
                 </td>
-                <td style="font-weight:700;color:var(--success)">
+                <td data-label="Discount" style="font-weight:700;color:var(--success)">
                   ${p.discount_type === 'percentage' ? `${p.discount_value}% OFF` : `${formatRWF(p.discount_value)} OFF`}
                 </td>
-                <td style="font-size:var(--text-xs)">
+                <td data-label="Scope" style="font-size:var(--text-xs)">
                   ${{site_wide:'All products',featured_only:'Featured only',specific_products:'Specific'}[p.scope] || p.scope}
                 </td>
-                <td style="font-size:var(--text-xs)">${p.apply_to_page || 'all'}</td>
-                <td style="font-size:var(--text-xs)">${p.uses_count ?? 0}${p.max_uses ? ` / ${p.max_uses}` : ''}</td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted)">${p.valid_until ? formatDate(p.valid_until) : '—'}</td>
-                <td><span class="badge ${p.is_active ? 'badge-success' : 'badge-default'}">${p.is_active ? 'Active' : 'Off'}</span></td>
-                <td>
+                <td data-label="Page" style="font-size:var(--text-xs)">${p.apply_to_page || 'all'}</td>
+                <td data-label="Uses" style="font-size:var(--text-xs)">${p.uses_count ?? 0}${p.max_uses ? ` / ${p.max_uses}` : ''}</td>
+                <td data-label="Expires" style="font-size:var(--text-xs);color:var(--text-muted)">${p.valid_until ? formatDate(p.valid_until) : '—'}</td>
+                <td data-label="Status"><span class="badge ${p.is_active ? 'badge-success' : 'badge-default'}">${p.is_active ? 'Active' : 'Off'}</span></td>
+                <td data-label="Actions">
                   <div style="display:flex;gap:var(--space-2)">
                     <button class="btn btn-secondary btn-sm edit-promo-btn" data-id="${p.id}">Edit</button>
                     <button class="btn btn-ghost btn-sm delete-promo-btn" data-id="${p.id}" style="color:var(--error)">✕</button>
@@ -267,7 +267,7 @@ async function openPromoModal(promo) {
     const discount_value = parseFloat(document.getElementById('promo-discount-value').value);
     const scope = document.getElementById('promo-scope').value;
     const apply_to_page = document.getElementById('promo-page').value;
-    const min_order_cents = parseInt(document.getElementById('promo-min-order').value) || null;
+    const min_order_cents = parseInt(document.getElementById('promo-min-order').value) || 0;
     const max_uses = parseInt(document.getElementById('promo-max-uses').value) || null;
     const valid_from = document.getElementById('promo-valid-from').value || new Date().toISOString();
     const valid_until = document.getElementById('promo-expires').value || null;

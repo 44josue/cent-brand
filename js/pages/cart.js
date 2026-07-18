@@ -4,6 +4,7 @@ import { validatePromoCode } from '../lib/api.js';
 import { formatRWF, toast } from '../lib/utils.js';
 import { syncCart, setCartItemQty, removeFromCart, updateCartBadges } from '../lib/cart.js';
 import { pageUrl } from '../lib/paths.js';
+import { trackScrollPosition, restoreScrollPosition } from '../lib/page-state.js';
 
 renderNav();
 renderFooter();
@@ -17,6 +18,8 @@ async function init() {
   cartState = await syncCart();
   updateCartBadges();
   renderCart();
+  trackScrollPosition();
+  restoreScrollPosition();
 }
 
 function renderCart() {

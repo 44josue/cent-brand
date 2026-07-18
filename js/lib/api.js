@@ -391,24 +391,14 @@ export async function clearCart(cartId) {
 // ── ORDERS ────────────────────────────────────────────────────────────────────
 
 export async function getOrderByToken(token) {
-  const select = `
-    id, public_token, short_token, status, payment_status, total_cents, subtotal_cents, shipping_cents, discount_cents, shipping_address, note, created_at, updated_at,
-    customers(id, email, full_name, phone),
-    payment_channels:payment_channel_id(id, name, number),
-    order_items(id, product_name, size, color, unit_price_cents, quantity, image_url),
-    payment_submissions(id, payer_name, payer_phone, reference_code, amount_paid_cents, proof_storage_path, created_at, status)
-  `;
-
-  // Try full UUID match first
-  const { data } = await supabase.from('orders').select(select).eq('public_token', token).maybeSingle();
-  if (data) return data;
-
-  // Try short_token column (6-char uppercase derived from UUID)
-  const short = token.replace(/-/g, '').slice(0, 6).toUpperCase();
-  const { data: byShort, error } = await supabase.from('orders').select(select).eq('short_token', short).maybeSingle();
-  if (byShort) return byShort;
-
-  throw error || new Error('Order not found');
+  // get_public_order is a SECURITY DEFINER RPC that validates the exact token
+  // match server-side, so it can safely return the customer's name/email/phone
+  // (and items/payment info) to a guest without exposing every customer's PII
+  // the way a blanket "public_token IS NOT NULL" RLS policy would.
+  const { data, error } = await supabase.rpc('get_public_order', { p_token: token });
+  if (error) throw error;
+  if (!data) throw new Error('Order not found');
+  return data;
 }
 
 export async function getOrderById(id) {
@@ -947,13 +937,14 @@ export async function createReceipt(orderId) {
 // ── DASHBOARD STATS ───────────────────────────────────────────────────────────
 
 export async function getDashboardStats() {
-  const [totalRes, pendingRes, verifiedTodayRes, revenueRes] = await Promise.all([
+  const [totalRes, pendingRes, verifiedTodayRes, revenueRes, customersRes] = await Promise.all([
     supabase.from('orders').select('id', { count: 'exact', head: true }),
     supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'awaiting_payment_verification'),
     supabase.from('orders').select('id', { count: 'exact', head: true })
       .eq('payment_status', 'verified')
       .gte('updated_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
     supabase.from('orders').select('total_cents').eq('payment_status', 'verified'),
+    supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_guest', false),
   ]);
 
   const totalRevenue = (revenueRes.data || []).reduce((s, o) => s + (o.total_cents || 0), 0);
@@ -963,5 +954,6 @@ export async function getDashboardStats() {
     pendingVerification: pendingRes.count || 0,
     verifiedToday: verifiedTodayRes.count || 0,
     totalRevenueCents: totalRevenue,
+    totalCustomers: customersRes.count || 0,
   };
 }

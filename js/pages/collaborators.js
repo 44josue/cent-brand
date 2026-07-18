@@ -3,6 +3,7 @@ import { renderFooter } from '../components/footer.js';
 import { getCollaborators } from '../lib/api.js';
 import { initTheme } from '../lib/utils.js';
 import { pageUrl } from '../lib/paths.js';
+import { trackScrollPosition, restoreScrollPosition } from '../lib/page-state.js';
 
 initTheme();
 renderNav();
@@ -43,6 +44,9 @@ async function init() {
         </div>
       </a>
     `).join('');
+
+    trackScrollPosition();
+    restoreScrollPosition();
   } catch (err) {
     console.error(err);
     grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted)">Could not load collaborations.</p>';

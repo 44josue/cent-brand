@@ -89,6 +89,10 @@
           <label for="edit-phone">Phone</label>
           <input type="tel" id="edit-phone" class="input" placeholder="+250 7XX XXX XXX">
         </div>
+        <div class="input-group hidden" id="edit-job-title-group">
+          <label for="edit-job-title">Title <span style="color:var(--text-muted);font-weight:400">(used in your email signature)</span></label>
+          <input type="text" id="edit-job-title" class="input" placeholder="e.g. Founder &amp; CEO of CENT">
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-profile-modal').classList.add('hidden')">Cancel</button>
           <button type="submit" class="btn btn-primary" id="save-profile-btn">Save Changes</button>

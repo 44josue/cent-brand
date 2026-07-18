@@ -154,7 +154,7 @@ async function loadCollabs() {
           <tbody>
             ${collabs.map(c => `
               <tr>
-                <td>
+                <td data-label="Collab">
                   <div style="display:flex;align-items:center;gap:var(--space-3)">
                     ${c.logo_url ? `<img src="${c.logo_url}" style="width:32px;height:32px;object-fit:contain;border-radius:var(--radius-sm);border:1px solid var(--border)" onerror="this.style.display='none'">` : ''}
                     <div>
@@ -163,10 +163,10 @@ async function loadCollabs() {
                     </div>
                   </div>
                 </td>
-                <td><span class="font-mono" style="font-size:var(--text-xs);color:var(--text-muted)">${c.slug}</span></td>
-                <td style="font-size:var(--text-sm)">${c.sort_order}</td>
-                <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-default'}">${c.is_active ? 'Active' : 'Hidden'}</span></td>
-                <td>
+                <td data-label="Slug"><span class="font-mono" style="font-size:var(--text-xs);color:var(--text-muted)">${c.slug}</span></td>
+                <td data-label="Order" style="font-size:var(--text-sm)">${c.sort_order}</td>
+                <td data-label="Status"><span class="badge ${c.is_active ? 'badge-success' : 'badge-default'}">${c.is_active ? 'Active' : 'Hidden'}</span></td>
+                <td data-label="Actions">
                   <div style="display:flex;gap:var(--space-2)">
                     <a href="${pageUrl('products/')}?collab=${c.slug}" target="_blank" class="btn btn-ghost btn-sm">View</a>
                     <button class="btn btn-secondary btn-sm edit-collab-btn" data-id="${c.id}">Edit</button>

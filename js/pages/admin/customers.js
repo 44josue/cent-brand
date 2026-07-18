@@ -63,11 +63,11 @@ function renderProfiles(profiles, container) {
         <tbody>
           ${profiles.map(p => `
             <tr>
-              <td style="font-weight:600;font-size:var(--text-sm)">${p.full_name || '—'}</td>
-              <td style="font-size:var(--text-sm)">${p.email || '—'}</td>
-              <td style="font-size:var(--text-sm);color:var(--text-muted)">${p.phone || '—'}</td>
-              <td>${roleBadge(p.role)}</td>
-              <td style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(p.created_at)}</td>
+              <td data-label="Name" style="font-weight:600;font-size:var(--text-sm)">${p.full_name || '—'}</td>
+              <td data-label="Email" style="font-size:var(--text-sm)">${p.email || '—'}</td>
+              <td data-label="Phone" style="font-size:var(--text-sm);color:var(--text-muted)">${p.phone || '—'}</td>
+              <td data-label="Role">${roleBadge(p.role)}</td>
+              <td data-label="Joined" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(p.created_at)}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -87,11 +87,11 @@ function renderGuests(guests, container) {
         <tbody>
           ${guests.map(g => `
             <tr>
-              <td style="font-weight:600;font-size:var(--text-sm)">${g.guest_name || '—'}</td>
-              <td style="font-size:var(--text-sm)">${g.guest_email || '—'}</td>
-              <td style="font-size:var(--text-sm);color:var(--text-muted)">${g.guest_phone || '—'}</td>
-              <td><span class="badge badge-default">Guest</span></td>
-              <td style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(g.created_at)}</td>
+              <td data-label="Name" style="font-weight:600;font-size:var(--text-sm)">${g.guest_name || '—'}</td>
+              <td data-label="Email" style="font-size:var(--text-sm)">${g.guest_email || '—'}</td>
+              <td data-label="Phone" style="font-size:var(--text-sm);color:var(--text-muted)">${g.guest_phone || '—'}</td>
+              <td data-label="Role"><span class="badge badge-default">Guest</span></td>
+              <td data-label="Joined" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(g.created_at)}</td>
             </tr>
           `).join('')}
         </tbody>

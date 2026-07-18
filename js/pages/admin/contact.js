@@ -72,15 +72,15 @@ async function loadMessages() {
                 <td>
                   ${!m.is_read ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>' : ''}
                 </td>
-                <td>
-                  <div style="font-weight:${!m.is_read ? '700' : '400'};font-size:var(--text-sm)">${m.name || '—'}</div>
+                <td data-label="From">
+                  <div style="font-weight:${!m.is_read ? '700' : '400'};font-size:var(--text-sm)">${m.full_name || '—'}</div>
                   <div style="font-size:var(--text-xs);color:var(--text-muted)">${m.email || ''}</div>
                 </td>
-                <td style="font-size:var(--text-sm);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                <td data-label="Subject" style="font-size:var(--text-sm);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                   ${m.subject || '(No subject)'}
                 </td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(m.created_at)}</td>
-                <td>
+                <td data-label="Date" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(m.created_at)}</td>
+                <td data-label="Actions">
                   <div style="display:flex;gap:var(--space-2)">
                     <button class="btn btn-secondary btn-sm view-msg-btn" data-id="${m.id}">View</button>
                     <button class="btn btn-ghost btn-sm del-msg-btn" data-id="${m.id}" style="color:var(--error)">Delete</button>
@@ -119,11 +119,11 @@ async function viewMessage(msg) {
   document.getElementById('msg-modal-title').textContent = msg.subject || '(No subject)';
   document.getElementById('msg-modal-body').innerHTML = `
     <div style="display:grid;grid-template-columns:auto 1fr;gap:var(--space-2) var(--space-4);font-size:var(--text-sm);margin-bottom:var(--space-6);color:var(--text-muted)">
-      <span>From</span><span style="color:var(--text-primary)">${msg.name || '—'} &lt;${msg.email || '—'}&gt;</span>
+      <span>From</span><span style="color:var(--text-primary)">${msg.full_name || '—'} &lt;${msg.email || '—'}&gt;</span>
       ${msg.phone ? `<span>Phone</span><span style="color:var(--text-primary)">${msg.phone}</span>` : ''}
       <span>Date</span><span style="color:var(--text-primary)">${formatDate(msg.created_at)}</span>
     </div>
-    <div style="background:var(--bg-base);border-radius:var(--radius);padding:var(--space-4);font-size:var(--text-sm);line-height:1.7;white-space:pre-wrap;border:1px solid var(--border)">${msg.message || ''}</div>
+    <div style="background:var(--bg-base);border-radius:var(--radius);padding:var(--space-4);font-size:var(--text-sm);line-height:1.7;white-space:pre-wrap;border:1px solid var(--border)">${msg.body || ''}</div>
     <div style="margin-top:var(--space-6);display:flex;gap:var(--space-3)">
       <a href="mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject || '')}" class="btn btn-primary btn-sm">Reply via Email</a>
       ${msg.phone ? `<a href="https://wa.me/${msg.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-secondary btn-sm">WhatsApp</a>` : ''}

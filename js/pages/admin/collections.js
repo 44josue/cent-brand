@@ -128,10 +128,10 @@ async function loadCollections() {
           <tbody>
             ${collections.map(c => `
               <tr>
-                <td style="font-weight:600;font-size:var(--text-sm)">${c.name}</td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted);font-family:var(--font-mono)">${c.slug}</td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted);max-width:220px">${c.description || '—'}</td>
-                <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-default'}">${c.is_active ? 'Active' : 'Hidden'}</span></td>
+                <td data-label="Name" style="font-weight:600;font-size:var(--text-sm)">${c.name}</td>
+                <td data-label="Slug" style="font-size:var(--text-xs);color:var(--text-muted);font-family:var(--font-mono)">${c.slug}</td>
+                <td data-label="Description" style="font-size:var(--text-xs);color:var(--text-muted);max-width:220px">${c.description || '—'}</td>
+                <td data-label="Status"><span class="badge ${c.is_active ? 'badge-success' : 'badge-default'}">${c.is_active ? 'Active' : 'Hidden'}</span></td>
                 <td>
                   <div style="display:flex;gap:var(--space-2)">
                     <button class="btn btn-secondary btn-sm edit-btn" data-id="${c.id}">Edit</button>

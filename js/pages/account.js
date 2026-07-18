@@ -1,6 +1,6 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
-import { requireAuth, getCurrentProfile, updateProfile, signOut, getUser } from '../lib/auth.js';
+import { requireAuth, getCurrentProfile, updateProfile, signOut, getUser, updateEmail, updatePassword, reauthenticate } from '../lib/auth.js';
 import { getOrdersByCustomer } from '../lib/api.js';
 import { supabase } from '../lib/supabase.js';
 import { formatRWF, formatDate, modal, toast, statusBadge, shortToken, initTheme } from '../lib/utils.js';
@@ -78,6 +78,7 @@ function renderAccount(profile, orders, wishlist) {
       <button class="tab-btn active" data-tab="orders">Orders (${orders.length})</button>
       <button class="tab-btn" data-tab="track">Track Order</button>
       <button class="tab-btn" data-tab="wishlist">Wishlist (${wishlist.length})</button>
+      <button class="tab-btn" data-tab="security">Security</button>
     </div>
 
     <div class="tab-panel active" id="tab-orders">
@@ -90,6 +91,10 @@ function renderAccount(profile, orders, wishlist) {
 
     <div class="tab-panel" id="tab-wishlist">
       ${renderWishlist(wishlist)}
+    </div>
+
+    <div class="tab-panel" id="tab-security">
+      ${renderSecurityTab(profile)}
     </div>
   `;
 
@@ -117,6 +122,9 @@ function renderAccount(profile, orders, wishlist) {
   document.getElementById('edit-profile-btn')?.addEventListener('click', () => {
     document.getElementById('edit-name').value = profile.full_name || '';
     document.getElementById('edit-phone').value = profile.phone || '';
+    document.getElementById('edit-job-title-group')?.classList.toggle('hidden', !['admin', 'ops'].includes(profile.role));
+    const jobTitleInput = document.getElementById('edit-job-title');
+    if (jobTitleInput) jobTitleInput.value = profile.job_title || '';
     document.querySelector('#edit-profile-modal .modal-close')?.addEventListener('click', () => modal.close('edit-profile-modal'), { once: true });
     modal.open('edit-profile-modal');
   });
@@ -134,10 +142,14 @@ function renderAccount(profile, orders, wishlist) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>';
     try {
-      await updateProfile(profile.id, {
+      const updates = {
         full_name: document.getElementById('edit-name').value.trim(),
         phone: document.getElementById('edit-phone').value.trim(),
-      });
+      };
+      if (['admin', 'ops'].includes(profile.role)) {
+        updates.job_title = document.getElementById('edit-job-title')?.value.trim() || null;
+      }
+      await updateProfile(profile.id, updates);
       toast.success('Profile updated!');
       modal.close('edit-profile-modal');
       setTimeout(() => window.location.reload(), 500);
@@ -147,6 +159,115 @@ function renderAccount(profile, orders, wishlist) {
       btn.textContent = 'Save Changes';
     }
   });
+
+  // Change email
+  document.getElementById('change-email-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('change-email-btn');
+    const msg = document.getElementById('change-email-msg');
+    const newEmail = document.getElementById('new-email').value.trim();
+    const currentPassword = document.getElementById('email-current-password').value;
+    msg.style.display = 'none';
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { toast.error('Enter a valid email address.'); return; }
+    if (newEmail.toLowerCase() === profile.email.toLowerCase()) { toast.error('That\'s already your email.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    try {
+      await reauthenticate(currentPassword);
+      await updateEmail(newEmail);
+      msg.style.display = 'block';
+      msg.style.color = 'var(--success)';
+      msg.textContent = `Confirmation links sent to ${profile.email} and ${newEmail} — the change takes effect once you click the link in the new inbox.`;
+      document.getElementById('change-email-form').reset();
+    } catch (err) {
+      msg.style.display = 'block';
+      msg.style.color = 'var(--error)';
+      msg.textContent = err.message || 'Could not update email.';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Update Email';
+  });
+
+  // Change password
+  document.getElementById('change-password-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('change-password-btn');
+    const msg = document.getElementById('change-password-msg');
+    const currentPassword = document.getElementById('pw-current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    msg.style.display = 'none';
+
+    if (newPassword.length < 8) { toast.error('New password must be at least 8 characters.'); return; }
+    if (newPassword !== confirmPassword) { toast.error('Passwords do not match.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    try {
+      await reauthenticate(currentPassword);
+      await updatePassword(newPassword);
+      msg.style.display = 'block';
+      msg.style.color = 'var(--success)';
+      msg.textContent = 'Password updated.';
+      document.getElementById('change-password-form').reset();
+    } catch (err) {
+      msg.style.display = 'block';
+      msg.style.color = 'var(--error)';
+      msg.textContent = err.message || 'Could not update password.';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Update Password';
+  });
+}
+
+function renderSecurityTab(profile) {
+  return `
+    <div style="max-width:440px;margin-top:var(--space-4);display:flex;flex-direction:column;gap:var(--space-8)">
+      <div>
+        <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-1)">Change Email</h3>
+        <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-4)">Current: ${profile.email}</p>
+        <form id="change-email-form">
+          <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="input-group">
+              <label for="new-email">New Email</label>
+              <input type="email" id="new-email" class="input" placeholder="new@example.com" required>
+            </div>
+            <div class="input-group">
+              <label for="email-current-password">Current Password</label>
+              <input type="password" id="email-current-password" class="input" placeholder="••••••••" required>
+            </div>
+            <span id="change-email-msg" style="display:none;font-size:var(--text-xs)"></span>
+            <button type="submit" class="btn btn-secondary" id="change-email-btn" style="align-self:flex-start">Update Email</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-1)">Change Password</h3>
+        <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-4)">Choose a new password of at least 8 characters.</p>
+        <form id="change-password-form">
+          <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="input-group">
+              <label for="pw-current-password">Current Password</label>
+              <input type="password" id="pw-current-password" class="input" placeholder="••••••••" required>
+            </div>
+            <div class="input-group">
+              <label for="new-password">New Password</label>
+              <input type="password" id="new-password" class="input" placeholder="At least 8 characters" minlength="8" required>
+            </div>
+            <div class="input-group">
+              <label for="confirm-password">Confirm New Password</label>
+              <input type="password" id="confirm-password" class="input" placeholder="••••••••" required>
+            </div>
+            <span id="change-password-msg" style="display:none;font-size:var(--text-xs)"></span>
+            <button type="submit" class="btn btn-secondary" id="change-password-btn" style="align-self:flex-start">Update Password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
 }
 
 function renderTrackTab() {

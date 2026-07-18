@@ -93,16 +93,16 @@ async function loadOrders(container) {
           <tbody>
             ${rows.map(o => `
               <tr>
-                <td><span class="font-mono" style="font-size:var(--text-xs)">#${shortToken(o.public_token)}</span></td>
-                <td>
+                <td data-label="Order"><span class="font-mono" style="font-size:var(--text-xs)">#${shortToken(o.public_token)}</span></td>
+                <td data-label="Customer">
                   <div style="font-size:var(--text-sm)">${o.customers?.full_name || '—'}</div>
                   <div style="font-size:var(--text-xs);color:var(--text-muted)">${o.customers?.email || ''}</div>
                 </td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(o.created_at)}</td>
-                <td>${statusBadge(o.status)}</td>
-                <td style="font-size:var(--text-xs);color:var(--text-muted)">${o.payment_channels?.name || '—'}</td>
-                <td style="font-weight:700;font-size:var(--text-sm)">${formatRWF(o.total_cents)}</td>
-                <td><a href="${pageUrl('admin/order-detail/')}?token=${o.public_token}" class="btn btn-secondary btn-sm">View</a></td>
+                <td data-label="Date" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(o.created_at)}</td>
+                <td data-label="Status">${statusBadge(o.status)}</td>
+                <td data-label="Payment" style="font-size:var(--text-xs);color:var(--text-muted)">${o.payment_channels?.name || '—'}</td>
+                <td data-label="Total" style="font-weight:700;font-size:var(--text-sm)">${formatRWF(o.total_cents)}</td>
+                <td data-label="Actions"><a href="${pageUrl('admin/order-detail/')}?token=${o.public_token}" class="btn btn-secondary btn-sm">View</a></td>
               </tr>
             `).join('')}
           </tbody>

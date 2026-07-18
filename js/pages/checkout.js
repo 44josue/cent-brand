@@ -91,12 +91,20 @@ async function renderPaymentChannels() {
   });
 }
 
+function calcDiscount(subtotal) {
+  if (!appliedPromo) return 0;
+  const raw = appliedPromo.discount_type === 'fixed'
+    ? appliedPromo.discount_value
+    : Math.floor(subtotal * appliedPromo.discount_value / 100);
+  return Math.min(raw, subtotal);
+}
+
 function renderSummary() {
   const el = document.getElementById('checkout-summary');
   if (!el || !cartState) return;
 
   const subtotal = cartState.items.reduce((s, i) => s + i.priceCents * i.quantity, 0);
-  const discount = appliedPromo ? Math.floor(subtotal * appliedPromo.discount_pct / 100) : 0;
+  const discount = calcDiscount(subtotal);
   const total = subtotal - discount;
 
   el.innerHTML = `
@@ -159,6 +167,52 @@ function setupEvents() {
 
   // Submit
   form?.addEventListener('submit', handleSubmit);
+
+  // Promo code
+  document.getElementById('promo-apply-btn')?.addEventListener('click', applyPromo);
+  document.getElementById('promo-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); applyPromo(); }
+  });
+}
+
+async function applyPromo() {
+  const input = document.getElementById('promo-input');
+  const msg = document.getElementById('promo-msg');
+  const btn = document.getElementById('promo-apply-btn');
+  const code = input?.value.trim();
+  if (!code) return;
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const promo = await validatePromoCode(code);
+    const subtotal = cartState.items.reduce((s, i) => s + i.priceCents * i.quantity, 0);
+    if (!promo) {
+      appliedPromo = null;
+      msg.style.display = 'block';
+      msg.style.color = 'var(--error)';
+      msg.textContent = 'Invalid or expired promo code.';
+    } else if (promo.min_order_cents && subtotal < promo.min_order_cents) {
+      appliedPromo = null;
+      msg.style.display = 'block';
+      msg.style.color = 'var(--error)';
+      msg.textContent = `Minimum order of ${formatRWF(promo.min_order_cents)} required.`;
+    } else {
+      appliedPromo = promo;
+      msg.style.display = 'block';
+      msg.style.color = 'var(--success)';
+      msg.textContent = `Applied "${promo.code}".`;
+      toast.success('Promo code applied.');
+    }
+  } catch {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--error)';
+    msg.textContent = 'Could not validate promo code.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Apply';
+    renderSummary();
+  }
 }
 
 async function prefillFromProfile() {
@@ -274,7 +328,7 @@ async function handleSubmit(e) {
 
   try {
     const subtotal = cartState.items.reduce((s, i) => s + i.priceCents * i.quantity, 0);
-    const discount = appliedPromo ? Math.floor(subtotal * (appliedPromo.discount_value || 0) / 100) : 0;
+    const discount = calcDiscount(subtotal);
     const totalCents = subtotal - discount;
 
     let result;

@@ -2,6 +2,7 @@ import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { formatRWF, getParam, toast, modal, renderMarkdown } from '../lib/utils.js';
 import { pageUrl } from '../lib/paths.js';
+import { trackScrollPosition, restoreScrollPosition } from '../lib/page-state.js';
 
 renderNav();
 renderFooter();
@@ -58,6 +59,9 @@ async function loadProduct() {
     if (product.categories?.id) {
       loadRelated(product.categories.id, product.id);
     }
+
+    trackScrollPosition();
+    restoreScrollPosition();
 
   } catch (err) {
     console.error('loadProduct:', err);

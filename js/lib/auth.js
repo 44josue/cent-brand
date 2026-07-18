@@ -17,7 +17,7 @@ export async function getUser() {
 export async function getProfile(userId) {
   const { data } = await supabase
     .from('profiles')
-    .select('id, email, full_name, phone, avatar_url, role')
+    .select('id, email, full_name, phone, avatar_url, role, job_title')
     .eq('id', userId)
     .single();
   return data;
@@ -99,6 +99,24 @@ export async function sendPasswordReset(email) {
 export async function updatePassword(newPassword) {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
+}
+
+// Sends a confirmation link to the new address via Supabase Auth's own
+// built-in mailer (separate from our Resend-based order emails — this works
+// even before Resend is configured, though the free-tier rate limit is low).
+export async function updateEmail(newEmail) {
+  const { error } = await supabase.auth.updateUser(
+    { email: newEmail },
+    { emailRedirectTo: `${window.location.origin}${pageUrl('login/')}` }
+  );
+  if (error) throw error;
+}
+
+export async function reauthenticate(currentPassword) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error('Not signed in.');
+  const { error } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword });
+  if (error) throw new Error('Current password is incorrect.');
 }
 
 export async function updateProfile(userId, updates) {

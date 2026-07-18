@@ -2,6 +2,7 @@ import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { formatRWF, getParam, setParams, debounce, toast } from '../lib/utils.js';
 import { pageUrl } from '../lib/paths.js';
+import { cacheGet, cacheSet, restoreScrollPosition, trackScrollPosition } from '../lib/page-state.js';
 
 renderNav();
 renderFooter();
@@ -10,7 +11,7 @@ let getProducts, getCategories, getCollections, getCollaborators, getAvailableSi
 let updateCartBadges;
 
 const LIMIT = 24;
-let currentPage = 1;
+let currentPage = parseInt(getParam('page')) || 1;
 let totalProducts = 0;
 let selectedSizes = [];
 
@@ -41,10 +42,14 @@ Promise.all([import('../lib/api.js'), import('../lib/cart.js')]).then(([api, car
 });
 
 async function init() {
-  await Promise.all([loadFilters(), loadProducts()]);
+  await Promise.all([loadFilters(), loadProducts(currentPage)]);
   setupEvents();
   applyStateToUI();
   updatePageTitle();
+  trackScrollPosition();
+  // Restore scroll after real content is on screen — not the loading skeleton —
+  // otherwise the page is too short and the browser just clamps to the bottom.
+  restoreScrollPosition();
 }
 
 function renderCollabsStrip(collabs) {
@@ -144,11 +149,31 @@ async function loadFilters() {
   }
 }
 
-async function loadProducts(page = 1) {
+function productsQueryKey(page) {
+  return `products:${JSON.stringify({ ...state, sizes: selectedSizes, page })}`;
+}
+
+async function loadProducts(page = 1, { syncUrl = true } = {}) {
   const grid = document.getElementById('products-grid');
   const countEl = document.getElementById('product-count');
 
   if (!grid) return;
+
+  // Keep the page number in the URL so the back button lands on the exact
+  // page/filter combination the user was looking at, not a fresh page 1.
+  if (syncUrl) setParams({ page: page > 1 ? page : null });
+
+  const queryKey = productsQueryKey(page);
+  const cached = cacheGet(queryKey);
+
+  if (cached) {
+    // Instant paint from cache — no skeleton flash — while state.js already
+    // reflects the current filters, so this is safe to trust as-is.
+    totalProducts = cached.total;
+    currentPage = page;
+    renderProductsGrid(cached.products, page);
+    return;
+  }
 
   grid.innerHTML = Array(6).fill('<div class="skeleton skeleton-card"></div>').join('');
   if (countEl) countEl.textContent = 'Loading...';
@@ -170,33 +195,38 @@ async function loadProducts(page = 1) {
 
     totalProducts = products.length; // We'll use this for pagination
     currentPage = page;
-
-    if (countEl) countEl.textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
-
-    if (!products.length) {
-      grid.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:var(--space-16) var(--space-8)">
-          <div style="font-size:4rem;margin-bottom:var(--space-4)">○</div>
-          <h3 style="margin-bottom:var(--space-2)">No products found</h3>
-          <p style="color:var(--text-muted);margin-bottom:var(--space-6)">Try adjusting your filters.</p>
-          <button class="btn btn-secondary" id="empty-clear-btn">Clear Filters</button>
-        </div>
-      `;
-      document.getElementById('empty-clear-btn')?.addEventListener('click', clearFilters);
-      document.getElementById('pagination').innerHTML = '';
-      return;
-    }
-
-    grid.innerHTML = products.map(productCard).join('');
-    renderPagination(page, Math.ceil(totalProducts / LIMIT));
-    initWishlistBtns();
-    initCardSliders();
-
+    cacheSet(queryKey, { products, total: totalProducts });
+    renderProductsGrid(products, page);
   } catch (err) {
     console.error('loadProducts:', err);
     toast.error('Could not load products.');
     grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-8)">Failed to load products.</p>';
   }
+}
+
+function renderProductsGrid(products, page) {
+  const grid = document.getElementById('products-grid');
+  const countEl = document.getElementById('product-count');
+  if (countEl) countEl.textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
+
+  if (!products.length) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:var(--space-16) var(--space-8)">
+        <div style="font-size:4rem;margin-bottom:var(--space-4)">○</div>
+        <h3 style="margin-bottom:var(--space-2)">No products found</h3>
+        <p style="color:var(--text-muted);margin-bottom:var(--space-6)">Try adjusting your filters.</p>
+        <button class="btn btn-secondary" id="empty-clear-btn">Clear Filters</button>
+      </div>
+    `;
+    document.getElementById('empty-clear-btn')?.addEventListener('click', clearFilters);
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  grid.innerHTML = products.map(productCard).join('');
+  renderPagination(page, Math.ceil(totalProducts / LIMIT));
+  initWishlistBtns();
+  initCardSliders();
 }
 
 function productCard(p) {

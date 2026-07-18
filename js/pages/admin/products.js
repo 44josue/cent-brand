@@ -56,7 +56,7 @@ async function loadProducts(container) {
               const media = (p.product_media || []).find(m => m.is_primary) || p.product_media?.[0];
               return `
                 <tr>
-                  <td>
+                  <td data-label="Product">
                     <div style="display:flex;align-items:center;gap:var(--space-3)">
                       ${media ? `<img src="${media.url}" alt="" style="width:40px;height:53px;object-fit:cover;border-radius:var(--radius-sm);background:var(--bg-base)">` : `<div style="width:40px;height:53px;background:var(--bg-card);border-radius:var(--radius-sm)"></div>`}
                       <div>
@@ -65,14 +65,14 @@ async function loadProducts(container) {
                       </div>
                     </div>
                   </td>
-                  <td style="font-size:var(--text-sm);color:var(--text-muted)">${p.categories?.name || '—'}</td>
-                  <td style="font-size:var(--text-sm)">${active.length} active / ${variants.length} total</td>
-                  <td style="font-weight:600;font-size:var(--text-sm)">${minPrice ? formatRWF(minPrice) : '—'}</td>
-                  <td>
+                  <td data-label="Category" style="font-size:var(--text-sm);color:var(--text-muted)">${p.categories?.name || '—'}</td>
+                  <td data-label="Variants" style="font-size:var(--text-sm)">${active.length} active / ${variants.length} total</td>
+                  <td data-label="Price" style="font-weight:600;font-size:var(--text-sm)">${minPrice ? formatRWF(minPrice) : '—'}</td>
+                  <td data-label="Status">
                     <span class="badge ${p.is_active ? 'badge-success' : 'badge-default'}">${p.is_active ? 'Active' : 'Draft'}</span>
                     ${p.is_featured ? '<span class="badge badge-info" style="margin-left:4px">Featured</span>' : ''}
                   </td>
-                  <td>
+                  <td data-label="Actions">
                     <div style="display:flex;gap:var(--space-2)">
                       <a href="${pageUrl('admin/product-form/')}?id=${p.id}" class="btn btn-secondary btn-sm">Edit</a>
                       <button class="btn btn-ghost btn-sm delete-btn" data-id="${p.id}" data-name="${p.name}">Delete</button>
