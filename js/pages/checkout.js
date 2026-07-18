@@ -3,7 +3,7 @@ import { renderFooter } from '../components/footer.js';
 import { callEdge, validatePromoCode, getPaymentChannels } from '../lib/api.js';
 import { formatRWF, districts, districtSectors, toast } from '../lib/utils.js';
 import { syncCart, updateCartBadges } from '../lib/cart.js';
-import { getCurrentProfile, getSession } from '../lib/auth.js';
+import { getCurrentProfile, getSession, updateProfile } from '../lib/auth.js';
 import { pageUrl } from '../lib/paths.js';
 
 renderNav();
@@ -12,6 +12,7 @@ renderFooter();
 let cartState = null;
 let appliedPromo = null;
 let paymentChannels = [];
+let payOnArrivalChosen = false;
 
 function channelLogo(name) {
   const n = (name || '').toLowerCase();
@@ -41,7 +42,10 @@ async function init() {
   await renderPaymentChannels();
   populateDistricts();
   restoreFormFromSession();
-  if (!isGuest) await prefillFromProfile();
+  if (!isGuest) {
+    await prefillFromProfile();
+    document.getElementById('use-account-info-btn')?.classList.remove('hidden');
+  }
   setupEvents();
 }
 
@@ -81,12 +85,23 @@ async function renderPaymentChannels() {
       <span style="font-size:1.4rem">${channelLogo(ch.name)}</span>
       <span style="font-weight:600">${ch.name}</span>
     </label>
-  `).join('');
+  `).join('') + `
+    <label class="payment-channel-option" data-id="poa">
+      <input type="radio" name="payment_channel" value="poa" style="display:none">
+      <span style="font-size:1.4rem">🚚</span>
+      <span style="font-weight:600">Pay on Arrival</span>
+    </label>
+  `;
   el.querySelectorAll('.payment-channel-option').forEach(label => {
     label.addEventListener('click', () => {
       el.querySelectorAll('.payment-channel-option').forEach(l => l.classList.remove('selected'));
       label.classList.add('selected');
       label.querySelector('input').checked = true;
+      payOnArrivalChosen = label.dataset.id === 'poa';
+      const hint = document.getElementById('submit-hint');
+      if (hint) hint.textContent = payOnArrivalChosen
+        ? 'Pay in cash when your order arrives. No card required.'
+        : 'You\'ll submit payment details on the next step. No card required.';
     });
   });
 }
@@ -168,6 +183,9 @@ function setupEvents() {
   // Submit
   form?.addEventListener('submit', handleSubmit);
 
+  // Use account info
+  document.getElementById('use-account-info-btn')?.addEventListener('click', () => prefillFromProfile(true));
+
   // Promo code
   document.getElementById('promo-apply-btn')?.addEventListener('click', applyPromo);
   document.getElementById('promo-input')?.addEventListener('keydown', (e) => {
@@ -215,16 +233,17 @@ async function applyPromo() {
   }
 }
 
-async function prefillFromProfile() {
+async function prefillFromProfile(force = false) {
   try {
     const profile = await getCurrentProfile();
     if (!profile) return;
     const nameEl = document.getElementById('full-name');
     const emailEl = document.getElementById('email');
     const phoneEl = document.getElementById('phone');
-    if (nameEl && !nameEl.value) nameEl.value = profile.full_name || '';
-    if (emailEl && !emailEl.value) emailEl.value = profile.email || '';
-    if (phoneEl && !phoneEl.value) phoneEl.value = profile.phone || '';
+    if (nameEl && (force || !nameEl.value)) nameEl.value = profile.full_name || '';
+    if (emailEl && (force || !emailEl.value)) emailEl.value = profile.email || '';
+    if (phoneEl && (force || !phoneEl.value)) phoneEl.value = profile.phone || '';
+    if (force) toast.success('Filled in from your account.');
   } catch { /* not logged in */ }
 }
 
@@ -299,13 +318,19 @@ async function handleSubmit(e) {
   const errorBanner = document.getElementById('error-banner');
   errorBanner.classList.add('hidden');
 
-  const paymentChannelId = document.querySelector('input[name="payment_channel"]:checked')?.value;
-  if (!paymentChannelId) {
+  const rawChannelChoice = document.querySelector('input[name="payment_channel"]:checked')?.value;
+  if (!rawChannelChoice) {
     toast.error('Please select a payment method.');
     btn.disabled = false;
     btn.textContent = 'Place Order';
     return;
   }
+  // "Pay on Arrival" isn't a real payment channel row — orders still need one on
+  // record, so fall back to the first real channel; the actual POA choice is
+  // carried via sessionStorage and finalized on the next (payment) step.
+  const paymentChannelId = rawChannelChoice === 'poa' ? paymentChannels[0]?.id : rawChannelChoice;
+  if (payOnArrivalChosen) sessionStorage.setItem('cent_poa', '1');
+  else sessionStorage.removeItem('cent_poa');
 
   const items = cartState.items.map(i => ({
     variantId: i.variantId,
@@ -345,6 +370,14 @@ async function handleSubmit(e) {
       });
     } else {
       result = await callEdge('place-order', { items, shippingAddress, paymentChannelId, note, promoCode });
+      // Register any details the account was still missing (e.g. phone),
+      // so next time these autofill instead of being asked again.
+      try {
+        const profile = await getCurrentProfile();
+        if (profile && !profile.phone && shippingAddress.phone) {
+          await updateProfile(profile.id, { phone: shippingAddress.phone });
+        }
+      } catch { /* non-critical — order already placed */ }
     }
     sessionStorage.removeItem('cent_checkout');
     window.location.href = `${pageUrl('checkout-payment/')}?order_id=${result.orderId}&token=${result.token}&total=${totalCents}`;

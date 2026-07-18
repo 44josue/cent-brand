@@ -1,10 +1,11 @@
 import { renderNav } from '../components/nav.js';
 import { signIn, signUp, sendPasswordReset, getUser } from '../lib/auth.js';
-import { initTheme, getParam, toast } from '../lib/utils.js';
+import { initTheme, getParam, toast, initPasswordToggles } from '../lib/utils.js';
 import { mergeCartOnLogin as mergeCart } from '../lib/cart.js';
 import { pageUrl } from '../lib/paths.js';
 
 initTheme();
+initPasswordToggles();
 renderNav();
 
 const redirectTo = getParam('redirect') || pageUrl();

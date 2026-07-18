@@ -316,6 +316,14 @@ async function loadAuthState() {
       if (slot) slot.innerHTML = `<a href="${pageUrl('admin/')}">Admin Dashboard</a>`;
     }
 
+    // Swap the generic account icon for the user's initials once we know who they are
+    const accountBtn = document.getElementById('account-btn');
+    const name = profile.full_name || profile.email;
+    if (accountBtn && name) {
+      const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      accountBtn.innerHTML = `<span class="nav-avatar">${initials}</span>`;
+    }
+
     // Pending order pulse dot
     const { supabase: sb } = await import('../lib/supabase.js');
     const { data: customer } = await sb.from('customers').select('id').eq('profile_id', profile.id).maybeSingle();

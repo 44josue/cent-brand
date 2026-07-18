@@ -104,6 +104,15 @@
           <form id="checkout-form" novalidate>
             <div style="display:flex;flex-direction:column;gap:var(--space-4)">
               <div class="input-group">
+                <label>1. How will you pay? *</label>
+                <div id="payment-channels" style="display:flex;gap:var(--space-3);margin-top:var(--space-1);flex-wrap:wrap"></div>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:var(--space-2)">
+                <label style="margin:0">2. Your Details</label>
+                <button type="button" class="btn btn-ghost btn-sm hidden" id="use-account-info-btn">Use my account info</button>
+              </div>
+              <div class="input-group">
                 <label for="full-name">Full Name *</label>
                 <input type="text" id="full-name" name="full_name" class="input" placeholder="Jean Pierre Habimana" autocomplete="name" required>
                 <span class="error-msg">Full name is required.</span>
@@ -120,6 +129,7 @@
                   <span class="error-msg">Phone number is required.</span>
                 </div>
               </div>
+              <label style="margin-top:var(--space-2)">3. Delivery Location</label>
               <div class="form-grid-2">
                 <div class="input-group">
                   <label for="district">District *</label>
@@ -140,13 +150,9 @@
                 <label for="notes">Order Notes <span style="color:var(--text-muted)">(optional)</span></label>
                 <textarea id="notes" name="notes" class="input" placeholder="Any specific delivery instructions..."></textarea>
               </div>
-              <div class="input-group">
-                <label>Payment Method *</label>
-                <div id="payment-channels" style="display:flex;gap:var(--space-3);margin-top:var(--space-1)"></div>
-              </div>
               <div id="error-banner" class="hidden" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:var(--space-3) var(--space-4);font-size:var(--text-sm);color:var(--error)"></div>
               <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">Place Order</button>
-              <p style="font-size:var(--text-xs);color:var(--text-muted);text-align:center">
+              <p style="font-size:var(--text-xs);color:var(--text-muted);text-align:center" id="submit-hint">
                 You'll submit payment details on the next step. No card required.
               </p>
             </div>

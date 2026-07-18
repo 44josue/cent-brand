@@ -9,7 +9,7 @@ function loadScript(src) {
   });
 }
 
-export async function downloadReceiptPDF(order) {
+export async function downloadReceiptPDF(order, { blurCode = false, share = false } = {}) {
   await Promise.all([
     loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'),
     loadScript('https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'),
@@ -69,10 +69,20 @@ export async function downloadReceiptPDF(order) {
   doc.setTextColor(80, 80, 80);
   doc.text('ORDER', lx, 25);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(255, 255, 255);
-  doc.text(`#${shortId}`, lx, 31);
+  if (blurCode) {
+    // jsPDF can't blur, so simulate "hidden" with a scrambled placeholder
+    doc.setFillColor(38, 38, 38);
+    doc.roundedRect(lx - 1, 27, 22, 6, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(90, 90, 90);
+    doc.text('•••••••', lx, 31);
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`#${shortId}`, lx, 31);
+  }
 
   // Date
   doc.setFont('helvetica', 'normal');
@@ -132,6 +142,20 @@ export async function downloadReceiptPDF(order) {
   doc.setTextColor(80, 80, 80);
   doc.text('CENT', divX + (W - divX) / 2, H - 7, { align: 'center' });
 
+  if (share) {
+    const blob = doc.output('blob');
+    const file = new File([blob], `CENT-${shortId}.pdf`, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'My CENT Receipt', text: 'Every Cent Matters. — cent.rw' });
+        return;
+      } catch (err) {
+        if (err?.name === 'AbortError') return;
+        // fall through to download
+      }
+    }
+  }
+
   doc.save(`CENT-${shortId}.pdf`);
 }
 
@@ -146,7 +170,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /** Renders a 1080×1920 (Instagram Story size) PNG people actually want to post. */
-export async function generateShareCard(order) {
+export async function generateShareCard(order, { blurCode = false } = {}) {
   await loadScript('https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js');
   if (document.fonts?.ready) { try { await document.fonts.ready; } catch {} }
 
@@ -183,7 +207,7 @@ export async function generateShareCard(order) {
   ctx.fillText('Every Cent Matters.', W / 2, 520);
 
   // ── Receipt card ──────────────────────────────────────────────────────────
-  const cardX = 90, cardY = 620, cardW = W - 180, cardH = 940;
+  const cardX = 90, cardY = 620, cardW = W - 180, cardH = 1060;
   roundRect(ctx, cardX, cardY, cardW, cardH, 28);
   ctx.fillStyle = '#111111';
   ctx.fill();
@@ -223,7 +247,26 @@ export async function generateShareCard(order) {
     y += 56;
   }
 
-  y += 40;
+  // Order code — blurred out if this card is meant for public sharing
+  const shortId = (order.public_token || '').replace(/-/g, '').slice(0, 6).toUpperCase();
+  y += 20;
+  ctx.fillStyle = '#525252';
+  ctx.font = '600 24px Inter, sans-serif';
+  ctx.fillText('ORDER CODE', W / 2, y);
+  y += 50;
+  ctx.font = '700 38px "Courier New", monospace';
+  if (blurCode) {
+    ctx.save();
+    ctx.filter = 'blur(9px)';
+    ctx.fillStyle = '#f5f5f5';
+    ctx.fillText(`#${shortId}`, W / 2, y);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = '#f5f5f5';
+    ctx.fillText(`#${shortId}`, W / 2, y);
+  }
+
+  y += 60;
   ctx.fillStyle = '#525252';
   ctx.font = '600 26px Inter, sans-serif';
   ctx.fillText('TOTAL', W / 2, y);
@@ -267,8 +310,8 @@ export async function generateShareCard(order) {
   return canvas.toDataURL('image/png');
 }
 
-export async function shareReceiptImage(order) {
-  const dataUrl = await generateShareCard(order);
+export async function shareReceiptImage(order, { blurCode = false } = {}) {
+  const dataUrl = await generateShareCard(order, { blurCode });
   const shortId = (order.public_token || '').replace(/-/g, '').slice(0, 6).toUpperCase();
   const fileName = `CENT-${shortId}.png`;
 
@@ -291,4 +334,9 @@ export async function shareReceiptImage(order) {
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+/** Shares the receipt as a PDF via the OS share sheet, falling back to a direct download. */
+export async function shareReceiptPDF(order, { blurCode = false } = {}) {
+  return downloadReceiptPDF(order, { blurCode, share: true });
 }

@@ -2,6 +2,7 @@ import { renderAdminShell } from '../../components/admin-shell.js';
 import { getAdminOrders, callEdge } from '../../lib/api.js';
 import { formatRWF, formatDate, statusBadge, shortToken, getParam, setParams, toast, initTheme } from '../../lib/utils.js';
 import { pageUrl } from '../../lib/paths.js';
+import { supabase } from '../../lib/supabase.js';
 
 initTheme();
 renderAdminShell('Orders', renderPage);
@@ -28,12 +29,18 @@ async function renderPage(container) {
         <h1>Orders</h1>
       </div>
 
-      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-6)">
-        ${STATUSES.map(s => `
-          <button class="btn btn-sm ${currentStatus === s.value ? 'btn-primary' : 'btn-secondary'} status-filter-btn" data-status="${s.value}">
-            ${s.label}
-          </button>
-        `).join('')}
+      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-6);justify-content:space-between">
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+          ${STATUSES.map(s => `
+            <button class="btn btn-sm ${currentStatus === s.value ? 'btn-primary' : 'btn-secondary'} status-filter-btn" data-status="${s.value}">
+              ${s.label}
+            </button>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:var(--space-2)">
+          <button class="btn btn-sm btn-secondary" id="export-csv-btn">Export CSV</button>
+          <button class="btn btn-sm btn-secondary" id="export-pdf-btn">Export PDF</button>
+        </div>
       </div>
 
       <div id="orders-table"></div>
@@ -54,7 +61,98 @@ async function renderPage(container) {
     });
   });
 
+  document.getElementById('export-csv-btn')?.addEventListener('click', () => exportOrders('csv'));
+  document.getElementById('export-pdf-btn')?.addEventListener('click', () => exportOrders('pdf'));
+
   loadOrders(container);
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function fetchAllOrdersForExport() {
+  let query = supabase
+    .from('orders')
+    .select(`
+      public_token, status, payment_status, total_cents, created_at,
+      customers(full_name, email, guest_name, guest_email, is_guest),
+      payment_channels:payment_channel_id(name)
+    `)
+    .order('created_at', { ascending: false });
+  if (currentStatus) query = query.eq('status', currentStatus);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
+async function exportOrders(format) {
+  const btn = document.getElementById(format === 'csv' ? 'export-csv-btn' : 'export-pdf-btn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Exporting...';
+
+  try {
+    const orders = await fetchAllOrdersForExport();
+    if (!orders.length) { toast.info('No orders to export.'); return; }
+
+    const rows = orders.map(o => {
+      const c = o.customers;
+      const name = c?.is_guest ? (c?.guest_name || '') : (c?.full_name || '');
+      const email = c?.is_guest ? (c?.guest_email || '') : (c?.email || '');
+      return {
+        order: `#${shortToken(o.public_token)}`,
+        customer: name,
+        email,
+        date: formatDate(o.created_at),
+        status: o.status.replace(/_/g, ' '),
+        payment: o.payment_channels?.name || '—',
+        total: (o.total_cents / 100).toLocaleString() + ' RWF',
+      };
+    });
+
+    if (format === 'csv') {
+      const headers = ['Order', 'Customer', 'Email', 'Date', 'Status', 'Payment', 'Total'];
+      const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
+      const csv = [headers.map(escape).join(','), ...rows.map(r => Object.values(r).map(escape).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cent-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
+      doc.setFontSize(14);
+      doc.text('CENT — Orders Export', 14, 15);
+      doc.setFontSize(9);
+      doc.text(`Generated ${new Date().toLocaleString()}${currentStatus ? ` — filtered: ${currentStatus.replace(/_/g, ' ')}` : ''}`, 14, 21);
+      doc.autoTable({
+        startY: 26,
+        head: [['Order', 'Customer', 'Email', 'Date', 'Status', 'Payment', 'Total']],
+        body: rows.map(r => Object.values(r)),
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [20, 20, 20] },
+      });
+      doc.save(`cent-orders-${new Date().toISOString().slice(0, 10)}.pdf`);
+    }
+    toast.success(`Exported ${orders.length} order${orders.length !== 1 ? 's' : ''}.`);
+  } catch (err) {
+    console.error('exportOrders:', err);
+    toast.error('Export failed.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 }
 
 async function loadOrders(container) {

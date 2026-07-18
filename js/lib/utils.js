@@ -33,6 +33,39 @@ export function slugify(str) {
   return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+// ── PASSWORD VISIBILITY TOGGLE ─────────────────────────────────────────────
+
+const EYE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>`;
+const EYE_OFF_ICON = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>`;
+
+/** Adds an eye-toggle button to every `input[type=password]` in the document (or a given root). Safe to call repeatedly — already-wrapped inputs are skipped. */
+export function initPasswordToggles(root = document) {
+  root.querySelectorAll('input[type="password"]').forEach(input => {
+    if (input.dataset.toggleInit) return;
+    input.dataset.toggleInit = '1';
+
+    const wrap = document.createElement('div');
+    wrap.style.position = 'relative';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    input.style.paddingRight = '42px';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'password-toggle-btn';
+    btn.setAttribute('aria-label', 'Show password');
+    btn.innerHTML = EYE_ICON;
+    wrap.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      btn.innerHTML = showing ? EYE_ICON : EYE_OFF_ICON;
+      btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+    });
+  });
+}
+
 // ── TOAST ───────────────────────────────────────────────────────────────────
 
 function ensureToastContainer() {

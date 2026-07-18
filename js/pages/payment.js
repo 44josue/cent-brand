@@ -23,12 +23,20 @@ let proofFile = null;
 let payOnArrival = false;
 
 async function init() {
-  // If total missing from URL, fetch from DB
+  // If total missing from URL, fetch from DB. Retry a couple times —
+  // the supabase-js CDN bundle occasionally throws a transient
+  // "Failed to fetch" under load, and silently leaving totalCents at 0
+  // would let a $0 payment submission slip through later.
   if (!totalCents) {
-    try {
-      const order = await getOrderByToken(token);
-      totalCents = order?.total_cents || 0;
-    } catch {}
+    for (let attempt = 0; attempt < 3 && !totalCents; attempt++) {
+      try {
+        const order = await getOrderByToken(token);
+        totalCents = order?.total_cents || 0;
+      } catch (err) {
+        console.error(`getOrderByToken attempt ${attempt + 1} failed:`, err);
+        if (attempt < 2) await new Promise(r => setTimeout(r, 500));
+      }
+    }
   }
 
   // Amount display
@@ -69,6 +77,12 @@ async function init() {
   setupPayOnArrival();
   setupFileUpload();
   setupForm();
+
+  // Carried over from the "how will you pay?" choice made at checkout step 1
+  if (sessionStorage.getItem('cent_poa') === '1') {
+    sessionStorage.removeItem('cent_poa');
+    document.getElementById('poa-card')?.click();
+  }
 }
 
 async function loadChannels() {
@@ -251,6 +265,23 @@ async function handleSubmit(e) {
     return;
   }
 
+  // totalCents can end up 0 if the order total never loaded (e.g. missing
+  // from the URL and the fallback fetch failed) — never submit a $0 amount,
+  // the DB rejects it and the customer would see a raw constraint error.
+  if (!totalCents || totalCents <= 0) {
+    toast.error('Could not confirm the order amount — refreshing and retrying...');
+    try {
+      const order = await getOrderByToken(token);
+      totalCents = order?.total_cents || 0;
+    } catch { /* still 0 — handled below */ }
+    if (!totalCents || totalCents <= 0) {
+      toast.error('Could not load the order total. Please refresh the page and try again.');
+      return;
+    }
+    const amountEl = document.getElementById('amount-display');
+    if (amountEl) amountEl.textContent = formatRWF(totalCents);
+  }
+
   const btn = document.getElementById('payment-submit-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Submitting...';
@@ -274,7 +305,7 @@ async function handleSubmit(e) {
       payerName,
       payerPhone,
       referenceCode: refCode,
-      amountPaidCents: payOnArrival ? 0 : totalCents,
+      amountPaidCents: totalCents,
       proofPath,
     });
 

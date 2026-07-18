@@ -5,6 +5,15 @@ still open, plus ideas worth considering. Last updated: 2026-07-18.
 
 ## Genuinely open (blocked or not yet done)
 
+0. **Checkout is a reordered single page, not the full multi-step wizard
+   that was asked for.** Payment method first, then details (with account
+   autofill), then location — all present and working — but it's still one
+   scrolling page, not separate step screens. Worth a proper multi-step
+   rebuild if that visual/UX distinction matters to you; flag it and I'll
+   do it properly with room to test it.
+0b. **Admin Products/Customers create/edit/delete, wishlist, and
+   out-of-stock handling still haven't been independently live-tested**
+   with real clicks (carried over from before — still true).
 1. **Resend isn't configured** — blocked on you getting a domain. See
    `DEPLOYMENT.md` for the full setup once you have one. As of this session,
    the **only secret you need to set is `RESEND_API_KEY`** — every edge

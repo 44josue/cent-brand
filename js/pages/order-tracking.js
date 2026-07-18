@@ -4,7 +4,7 @@ import { getOrderByToken } from '../lib/api.js';
 import { formatRWF, formatDateTime, getParam, toast, copyToClipboard, shortToken, statusBadge, paymentBadge } from '../lib/utils.js';
 import { supabase } from '../lib/supabase.js';
 import { updateCartBadges } from '../lib/cart.js';
-import { downloadReceiptPDF, shareReceiptImage } from '../lib/receipt.js';
+import { downloadReceiptPDF, shareReceiptImage, shareReceiptPDF } from '../lib/receipt.js';
 import { pageUrl } from '../lib/paths.js';
 
 renderNav();
@@ -211,20 +211,8 @@ function renderOrder(order) {
     </div>
   `;
 
-  // Share button → share receipt image
-  document.getElementById('share-btn')?.addEventListener('click', async () => {
-    const btn = document.getElementById('share-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>';
-    try {
-      await shareReceiptImage(order);
-    } catch (err) {
-      console.error('share receipt error:', err);
-      toast.error('Could not share receipt.');
-    }
-    btn.disabled = false;
-    btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Z"/></svg> Share`;
-  });
+  // Share button → open format/privacy choice, then share
+  document.getElementById('share-btn')?.addEventListener('click', () => openShareChoiceModal(order));
 
   // Receipt download
   document.getElementById('receipt-btn')?.addEventListener('click', async () => {
@@ -289,6 +277,70 @@ function renderOrder(order) {
   if (submitted) {
     setTimeout(() => toast.success('Payment submitted! We\'ll verify within 2–4 hours.'), 500);
   }
+}
+
+function openShareChoiceModal(order) {
+  const existing = document.getElementById('share-choice-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'share-choice-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:var(--space-6)';
+  overlay.innerHTML = `
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);max-width:360px;width:100%;padding:var(--space-6)">
+      <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-4)">Share Receipt</h3>
+
+      <div style="margin-bottom:var(--space-4)">
+        <label style="font-size:var(--text-xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:var(--space-2)">Format</label>
+        <div style="display:flex;gap:var(--space-2)">
+          <button type="button" class="btn btn-primary btn-sm share-format-btn" data-format="image" style="flex:1">Image</button>
+          <button type="button" class="btn btn-secondary btn-sm share-format-btn" data-format="pdf" style="flex:1">PDF</button>
+        </div>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);margin-bottom:var(--space-6);cursor:pointer">
+        <input type="checkbox" id="share-blur-code" checked>
+        Blur order code (recommended for public posts)
+      </label>
+
+      <div style="display:flex;gap:var(--space-2)">
+        <button type="button" class="btn btn-ghost" id="share-choice-cancel" style="flex:1">Cancel</button>
+        <button type="button" class="btn btn-primary" id="share-choice-go" style="flex:1">Share</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  let format = 'image';
+  overlay.querySelectorAll('.share-format-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      format = btn.dataset.format;
+      overlay.querySelectorAll('.share-format-btn').forEach(b => {
+        b.className = `btn btn-sm share-format-btn ${b.dataset.format === format ? 'btn-primary' : 'btn-secondary'}`;
+      });
+    });
+  });
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
+  document.getElementById('share-choice-cancel')?.addEventListener('click', close);
+
+  document.getElementById('share-choice-go')?.addEventListener('click', async () => {
+    const blurCode = document.getElementById('share-blur-code').checked;
+    const goBtn = document.getElementById('share-choice-go');
+    goBtn.disabled = true;
+    goBtn.innerHTML = '<span class="spinner"></span>';
+    try {
+      if (format === 'pdf') await shareReceiptPDF(order, { blurCode });
+      else await shareReceiptImage(order, { blurCode });
+      close();
+    } catch (err) {
+      console.error('share receipt error:', err);
+      toast.error('Could not share receipt.');
+      goBtn.disabled = false;
+      goBtn.textContent = 'Share';
+    }
+  });
 }
 
 function renderTimeline(currentStatus) {

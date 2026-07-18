@@ -64,7 +64,7 @@ async function loadFeaturedProducts() {
   if (!grid) return;
 
   try {
-    carouselProducts = await getProducts({ featured: true, limit: 3 });
+    carouselProducts = await getProducts({ featured: true, limit: 4 });
     if (!carouselProducts.length) {
       grid.innerHTML = `
         <div style="grid-column:1/-1;padding:var(--space-12) var(--space-6);text-align:center">

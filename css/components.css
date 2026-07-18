@@ -957,6 +957,25 @@ select.input option {
   .cookie-actions .btn { flex: 1; justify-content: center; }
 }
 
+/* ── PASSWORD TOGGLE ── */
+.password-toggle-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition);
+}
+
+.password-toggle-btn:hover { color: var(--text-primary); }
+
 /* ── DATA TABLE ── */
 .data-table-wrap {
   overflow-x: auto;

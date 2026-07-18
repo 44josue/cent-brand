@@ -3,7 +3,7 @@ import { renderFooter } from '../components/footer.js';
 import { requireAuth, getCurrentProfile, updateProfile, signOut, getUser, updateEmail, updatePassword, reauthenticate } from '../lib/auth.js';
 import { getOrdersByCustomer } from '../lib/api.js';
 import { supabase } from '../lib/supabase.js';
-import { formatRWF, formatDate, modal, toast, statusBadge, shortToken, initTheme } from '../lib/utils.js';
+import { formatRWF, formatDate, modal, toast, statusBadge, shortToken, initTheme, initPasswordToggles } from '../lib/utils.js';
 import { updateCartBadges } from '../lib/cart.js';
 import { pageUrl } from '../lib/paths.js';
 
@@ -97,6 +97,7 @@ function renderAccount(profile, orders, wishlist) {
       ${renderSecurityTab(profile)}
     </div>
   `;
+  initPasswordToggles();
 
   // Tabs
   document.querySelectorAll('#account-tabs .tab-btn').forEach(btn => {

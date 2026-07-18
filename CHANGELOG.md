@@ -3,6 +3,86 @@
 A running log of what's actually been done, session by session. `NEXT_SESSION.md`
 is for what's still open — this file is for what's finished.
 
+## Session 4 (2026-07-18, later — part 5)
+
+- **Fixed `payment_submissions_amount_paid_cents_check` violation on the
+  payment step.** Root cause: `totalCents` on the payment page comes either
+  from the URL's `?total=` param or a DB fallback fetch — if that fallback
+  fetch failed (most likely the `esm.sh` CDN's known intermittent
+  `Failed to fetch`, seen recurring all session) it was silently swallowed
+  and `totalCents` stayed `0`, which later got submitted as the payment
+  amount and hit the DB's `> 0` check constraint as a raw, ugly error.
+  Fixed three ways: the initial fetch now retries up to 3 times before
+  giving up; `handleSubmit` re-checks and re-fetches the total immediately
+  before submitting rather than trusting a possibly-stale `0`, and blocks
+  submission with a clear message if it truly can't be determined; and
+  `submit-payment` now validates the amount itself and returns a clean
+  "please refresh and try again" error instead of ever letting the raw
+  Postgres constraint message reach the customer. Verified directly against
+  the deployed function that a `0` amount is now rejected cleanly.
+
+## Session 4 (2026-07-18, later — part 4)
+
+- **Verified admin order status changes actually work, for real this time.**
+  Previously reported this as "already wired" based on a stale note without
+  re-testing it live. Actually clicked through it now: Verify Payment →
+  `payment_verified`, then Advance Status → `packed`, both confirmed in the
+  database. It works; I just hadn't proven it this session before claiming so.
+- **Fixed a real, live `duplicate key value violates unique constraint
+  "customers_email_idx"` crash on placing an order while logged in.** Same
+  root cause fixed for guest checkout back in session 1, but never applied
+  to the logged-in path (`place-order`): if a `customers` row already
+  existed for that email (e.g. from an earlier guest order), the blind
+  `insert` collided with the unique email constraint. `place-order` now
+  looks up by email first and links the existing row to the account
+  instead of inserting a duplicate — verified directly against the deployed
+  function with a real JWT (bypassed the browser for this one; Playwright
+  itself was crashing on this exact login→checkout path for unrelated
+  environment reasons worth another look if it recurs).
+
+## Session 4 (2026-07-18, later — part 3)
+
+- **Fixed the real "Pay on Arrival → Missing required fields" bug.** The
+  client sent `amountPaidCents: 0` for POA orders, and `submit-payment`
+  checked `!amountPaidCents` — `0` is falsy in JS, so every POA submission
+  was rejected. Sends the real total now; server also checks `== null`
+  instead of falsy, as a second line of defense.
+- **Checkout now asks "how will you pay?" first.** Payment method (MTN /
+  Airtel / **Pay on Arrival**, all three together for the first time) is
+  step 1, then contact details (with a "Use my account info" button for
+  logged-in users, and phone gets saved back to the account automatically
+  if it was missing), then delivery location. Choosing Pay on Arrival
+  carries through and auto-selects it on the payment step instead of
+  making the customer choose twice. (Note: this is a reordered single-page
+  flow, not separate wizard screens — a full multi-step rebuild wasn't
+  attempted given session time, but every field and choice from the
+  request is there.)
+- **Nav avatar**: the account icon now shows the logged-in user's initials
+  instead of a generic person icon, matching account/admin pages.
+- **Password visibility toggle** added to every password field site-wide
+  (login, signup, account security tab) via a reusable `initPasswordToggles()`
+  helper — click the eye icon to reveal/hide.
+- **Admin order export**: Orders page now has Export CSV and Export PDF
+  buttons (respects the current status filter), for bringing order data
+  into Excel or sharing a formatted report.
+- **Receipt sharing, redone**: choosing "Share Receipt" now opens a small
+  choice panel — Image or PDF, plus a "blur order code" checkbox (checked
+  by default) for when the receipt is headed to a public IG Story or
+  WhatsApp status. The order code is now actually printed on the share
+  card (it wasn't before) and gets a real canvas blur when hidden.
+- **Featured products**: capped at 4 (was 3, then briefly uncapped —
+  settled on 4 per the latest instruction), grid widened to 4 columns, and
+  the card image aspect ratio was un-stretched back to a proper 4:5
+  portrait (a `height:260px` override had made cards look squashed/wide).
+- **Hero "CENT" wordmark**: removed a separate, smaller mobile font-size
+  override so mobile uses the same fluid `clamp()` as desktop instead of a
+  visually different formula; switched the font's `font-display` from
+  `block` to `optional` so it renders instantly with a fallback font on
+  slow connections instead of a blank pop-in delay.
+- **Search input border**: fixed to a consistent 1px black in both themes
+  (a leftover dark-mode override was still setting it to the muted border
+  color).
+
 ## Session 4 (2026-07-18, later — part 2)
 
 ### Admin now gets emailed on everything order-related
