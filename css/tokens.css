@@ -1,7 +1,9 @@
-/* Bebas Neue (the big "CENT" display font) uses display=optional so it renders
-   instantly with the fallback font on slow connections instead of a blank pop-in —
-   for a brief moment rather than flashing in a fallback font and jumping in size. */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=optional');
+/* Bebas Neue (the big "CENT" display font) uses display=block so the text stays
+   invisible for a brief moment instead of ever flashing "cent" in a lowercase
+   fallback font. display=optional caused that on slower/mobile connections: if the
+   font missed its ~100ms window it locked in the fallback for the rest of the page
+   view and never swapped to the real font. */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Dancing+Script:wght@700&display=swap');
 
 :root {
