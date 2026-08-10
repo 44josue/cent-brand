@@ -390,11 +390,14 @@ function renderOrders(orders) {
 
 async function downloadReceipt(btn) {
   const { id, format } = btn.dataset;
+  // Tracking code is always hidden on the shared image regardless of this
+  // choice — this only controls whether the price is visible too.
+  const blurPrice = format === 'image' ? !confirm('Show the price on this image?\n\nOK = show price, Cancel = keep it hidden.') : true;
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = '...';
   try {
-    const { url } = await callEdge('get-order-receipt', { orderId: id, format });
+    const { url } = await callEdge('get-order-receipt', { orderId: id, format, blurPrice });
     window.open(url, '_blank');
   } catch (err) {
     toast.error(err.message || 'Could not load receipt.');
