@@ -64,10 +64,12 @@ async function init() {
     subscribeRealtime(order.id, order);
   } catch (err) {
     console.error('order-tracking:', err);
+    const { data: { user } } = await supabase.auth.getUser();
     document.getElementById('tracking-page').innerHTML = `
       <div class="empty-state">
         <h2>Order not found</h2>
-        <p>This tracking link may be invalid or expired.</p>
+        <p>This tracking link may be invalid or expired, or belongs to an account you're not signed in as.</p>
+        ${!user ? `<p style="margin-top:var(--space-2)">If this order was placed on a registered account, <a href="${pageUrl('login/')}">sign in</a> and try again.</p>` : ''}
         <a href="${pageUrl()}" class="btn btn-secondary" style="margin-top:var(--space-4)">Go Home</a>
       </div>
     `;
@@ -399,27 +401,49 @@ function renderPaymentSection(order, latestPayment) {
   return '';
 }
 
-function subscribeRealtime(orderId, originalOrder) {
-  supabase
-    .channel(`order-${orderId}`)
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'orders',
-      filter: `id=eq.${orderId}`,
-    }, (payload) => {
-      const newStatus = payload.new.status;
-      const newPaymentStatus = payload.new.payment_status;
+function applyStatusUpdate(newStatus) {
+  const badge = document.getElementById('status-badge');
+  if (badge) badge.innerHTML = statusBadge(newStatus);
+  const timeline = document.getElementById('status-timeline');
+  if (timeline) timeline.innerHTML = renderTimeline(newStatus);
+  toast.info('Order status updated: ' + newStatus.replace(/_/g, ' '));
+}
 
-      // Update status badge
-      const badge = document.getElementById('status-badge');
-      if (badge) badge.innerHTML = statusBadge(newStatus);
+async function subscribeRealtime(orderId, originalOrder) {
+  const { data: { session } } = await supabase.auth.getSession();
 
-      // Update timeline
-      const timeline = document.getElementById('status-timeline');
-      if (timeline) timeline.innerHTML = renderTimeline(newStatus);
+  if (session) {
+    // Logged-in customers (own order) and staff are covered by RLS, so a
+    // real postgres_changes subscription works and pushes instantly.
+    supabase
+      .channel(`order-${orderId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${orderId}`,
+      }, (payload) => {
+        if (payload.new.status !== originalOrder.status) {
+          originalOrder.status = payload.new.status;
+          applyStatusUpdate(payload.new.status);
+        }
+      })
+      .subscribe();
+    return;
+  }
 
-      toast.info('Order status updated: ' + newStatus.replace(/_/g, ' '));
-    })
-    .subscribe();
+  // Guests have no account for RLS to key off of, so they can't safely hold
+  // a realtime socket without reopening the data-leak this page used to have
+  // (see anon_order_by_token). Poll the token-validated RPC instead — still
+  // updates without a manual refresh, just not instant.
+  let lastStatus = originalOrder.status;
+  setInterval(async () => {
+    try {
+      const fresh = await getOrderByToken(token);
+      if (fresh?.status && fresh.status !== lastStatus) {
+        lastStatus = fresh.status;
+        applyStatusUpdate(fresh.status);
+      }
+    } catch { /* transient errors are fine, just try again next tick */ }
+  }, 15000);
 }

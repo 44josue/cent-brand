@@ -187,7 +187,7 @@ async function renderPage(container) {
           <!-- All mode info -->
           <div id="mode-all">
             <div class="card" style="padding:var(--space-4);font-size:var(--text-sm);color:var(--text-muted)">
-              Will send to <strong style="color:var(--text-primary)">${allCustomers.length} customers</strong> (${(profiles || []).length} registered + ${(guests || []).filter(g => g.guest_email).length} guests).
+              Will send to <strong style="color:var(--text-primary)">${allCustomers.length} customers</strong> (${(profiles || []).length} registered + ${(guests || []).filter(g => g.guest_email).length} without an account).
             </div>
           </div>
 
@@ -206,7 +206,7 @@ async function renderPage(container) {
                     <input type="checkbox" class="customer-check" value="${c.email}">
                     <span style="flex:1">${c.name}</span>
                     <span style="font-size:var(--text-xs);color:var(--text-muted)">${c.email}</span>
-                    <span class="badge ${c.type === 'guest' ? 'badge-default' : 'badge-info'}" style="font-size:10px">${c.type === 'guest' ? 'Guest' : 'Account'}</span>
+                    <span class="badge ${c.type === 'guest' ? 'badge-default' : 'badge-info'}" style="font-size:10px">${c.type === 'guest' ? 'Customer' : 'Account'}</span>
                   </label>
                 `).join('')}
               </div>

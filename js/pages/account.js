@@ -226,6 +226,32 @@ function renderAccount(profile, orders, wishlist) {
     btn.disabled = false;
     btn.textContent = 'Update Password';
   });
+
+  // Delete account
+  document.getElementById('delete-account-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!confirm('Permanently delete your account? This cannot be undone.')) return;
+
+    const btn = document.getElementById('delete-account-btn');
+    const msg = document.getElementById('delete-account-msg');
+    const currentPassword = document.getElementById('delete-current-password').value;
+    msg.style.display = 'none';
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    try {
+      await reauthenticate(currentPassword);
+      await callEdge('admin-manage-user', { action: 'delete' });
+      await signOut();
+      window.location.href = pageUrl();
+    } catch (err) {
+      msg.style.display = 'block';
+      msg.style.color = 'var(--error)';
+      msg.textContent = err.message || 'Could not delete account.';
+      btn.disabled = false;
+      btn.textContent = 'Delete My Account';
+    }
+  });
 }
 
 function renderSecurityTab(profile) {
@@ -269,6 +295,21 @@ function renderSecurityTab(profile) {
             </div>
             <span id="change-password-msg" style="display:none;font-size:var(--text-xs)"></span>
             <button type="submit" class="btn btn-secondary" id="change-password-btn" style="align-self:flex-start">Update Password</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-1);color:var(--error)">Delete Account</h3>
+        <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-4)">Permanently deletes your account and login. Your past orders stay on record but are no longer linked to you. This cannot be undone.</p>
+        <form id="delete-account-form">
+          <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="input-group">
+              <label for="delete-current-password">Current Password</label>
+              <input type="password" id="delete-current-password" class="input" placeholder="••••••••" required>
+            </div>
+            <span id="delete-account-msg" style="display:none;font-size:var(--text-xs)"></span>
+            <button type="submit" class="btn btn-danger" id="delete-account-btn" style="align-self:flex-start">Delete My Account</button>
           </div>
         </form>
       </div>
@@ -334,8 +375,10 @@ function renderOrders(orders) {
               <td style="font-weight:700;font-size:var(--text-sm)">${formatRWF(o.total_cents)}</td>
               <td style="display:flex;gap:var(--space-2);justify-content:flex-end;flex-wrap:wrap">
                 <a href="${pageUrl('order-tracking/')}?token=${o.public_token}" class="btn btn-secondary btn-sm">Track</a>
-                <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${o.id}" data-format="pdf">Receipt</button>
-                <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${o.id}" data-format="image">Story</button>
+                ${o.payment_status === 'verified' ? `
+                  <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${o.id}" data-format="pdf">Receipt</button>
+                  <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${o.id}" data-format="image">Story</button>
+                ` : ''}
               </td>
             </tr>
           `).join('')}

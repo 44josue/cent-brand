@@ -57,7 +57,7 @@ function renderAuthBanner(session) {
   } else {
     banner.innerHTML = `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--space-4);margin-bottom:var(--space-4);font-size:var(--text-sm)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">
-        <span style="color:var(--text-secondary)">Checking out as <strong style="color:var(--text-primary)">Guest</strong> — no account needed.</span>
+        <span style="color:var(--text-secondary)">No account needed — you can check out now.</span>
         <a href="${pageUrl('login/')}?next=${encodeURIComponent(pageUrl('checkout/'))}" style="font-size:var(--text-xs);color:var(--text-muted);text-decoration:underline">Sign in instead</a>
       </div>
     </div>`;

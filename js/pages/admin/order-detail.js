@@ -76,9 +76,18 @@ function renderOrder(container, order, proofUrl) {
   const addr = order.shipping_address || {};
   const submission = order.payment_submissions?.[0] || null;
 
+  const paymentVerified = order.payment_status === 'verified';
+
   actionsEl.innerHTML = `
-    <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${order.id}" data-format="pdf">⬇ Receipt</button>
-    <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${order.id}" data-format="image">⬇ Story Image</button>
+    ${paymentVerified ? `
+      <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${order.id}" data-format="pdf">⬇ Receipt</button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:var(--text-xs);color:var(--text-muted);cursor:pointer">
+        <input type="checkbox" id="story-show-price">Show price
+      </label>
+      <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${order.id}" data-format="image">⬇ Story Image</button>
+    ` : `
+      <span style="font-size:var(--text-xs);color:var(--text-muted)" title="Receipt unlocks once payment is verified">Receipt available after payment verification</span>
+    `}
     ${isPending ? `
       <button class="btn btn-success btn-sm" id="verify-btn">✓ Verify Payment</button>
       <button class="btn btn-danger btn-sm" id="reject-btn">✕ Reject</button>
@@ -94,11 +103,12 @@ function renderOrder(container, order, proofUrl) {
   actionsEl.querySelectorAll('.order-receipt-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const { id, format } = btn.dataset;
+      const blurPrice = !document.getElementById('story-show-price')?.checked;
       const original = btn.textContent;
       btn.disabled = true;
       btn.textContent = '...';
       try {
-        const { url } = await callEdge('get-order-receipt', { orderId: id, format });
+        const { url } = await callEdge('get-order-receipt', { orderId: id, format, blurPrice });
         window.open(url, '_blank');
       } catch (err) {
         toast.error(err.message || 'Could not load receipt.');
@@ -171,7 +181,7 @@ function renderOrder(container, order, proofUrl) {
       <div>
         <div class="card" style="margin-bottom:var(--space-6)">
           <h3 style="margin-bottom:var(--space-4)">Customer</h3>
-          <div style="font-size:var(--text-sm)">${order.customers?.full_name || 'Guest'}</div>
+          <div style="font-size:var(--text-sm)">${order.customers?.full_name || 'Customer'}</div>
           <div style="font-size:var(--text-sm);color:var(--text-muted)">${order.customers?.email || '—'}</div>
           ${order.customers?.phone ? `<div style="font-size:var(--text-sm);color:var(--text-muted)">${order.customers.phone}</div>` : ''}
 

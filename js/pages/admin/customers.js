@@ -17,7 +17,7 @@ async function renderPage(container) {
       <h3 style="font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-3);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:var(--text-xs)">Registered Accounts</h3>
       <div id="profiles-table" style="margin-bottom:var(--space-10)"></div>
 
-      <h3 style="font-size:var(--text-xs);font-weight:600;margin-bottom:var(--space-3);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em">Guest Customers</h3>
+      <h3 style="font-size:var(--text-xs);font-weight:600;margin-bottom:var(--space-3);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em">One-Time Customers</h3>
       <div id="guests-table"></div>
     </div>
   `;
@@ -128,7 +128,7 @@ function renderProfiles(profiles, container, myId, bannedIds) {
 
 function renderGuests(guests, container) {
   if (!guests.length) {
-    container.innerHTML = `<div class="card"><p style="color:var(--text-muted);font-size:var(--text-sm)">No guest orders yet.</p></div>`;
+    container.innerHTML = `<div class="card"><p style="color:var(--text-muted);font-size:var(--text-sm)">No orders yet.</p></div>`;
     return;
   }
   container.innerHTML = `
@@ -141,7 +141,7 @@ function renderGuests(guests, container) {
               <td data-label="Name" style="font-weight:600;font-size:var(--text-sm)">${g.guest_name || '—'}</td>
               <td data-label="Email" style="font-size:var(--text-sm)">${g.guest_email || '—'}</td>
               <td data-label="Phone" style="font-size:var(--text-sm);color:var(--text-muted)">${g.guest_phone || '—'}</td>
-              <td data-label="Role"><span class="badge badge-default">Guest</span></td>
+              <td data-label="Role"><span class="badge badge-default">Customer</span></td>
               <td data-label="Joined" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(g.created_at)}</td>
             </tr>
           `).join('')}
