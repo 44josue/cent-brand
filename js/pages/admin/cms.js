@@ -407,15 +407,15 @@ async function loadContactInfo() {
         </p>
         <div class="input-group">
           <label class="input-label">Email Address</label>
-          <input type="email" class="input" id="ci-email" value="${data.email || 'info@cent.rw'}" placeholder="info@cent.rw">
+          <input type="email" class="input" id="ci-email" value="${data.email || 'support@cent.rw'}" placeholder="support@cent.rw">
         </div>
         <div class="input-group" style="margin-top:var(--space-4)">
           <label class="input-label">Phone Number</label>
-          <input type="text" class="input" id="ci-phone" value="${data.phone || '+250 788 123 456'}" placeholder="+250 788 123 456">
+          <input type="text" class="input" id="ci-phone" value="${data.phone || '+250 794 084 321'}" placeholder="+250 794 084 321">
         </div>
         <div class="input-group" style="margin-top:var(--space-4)">
           <label class="input-label">WhatsApp Number</label>
-          <input type="text" class="input" id="ci-whatsapp" value="${data.whatsapp || ''}" placeholder="+250788123456">
+          <input type="text" class="input" id="ci-whatsapp" value="${data.whatsapp || ''}" placeholder="+250794084321">
         </div>
         <div class="input-group" style="margin-top:var(--space-4)">
           <label class="input-label">Location</label>

@@ -1,0 +1,53 @@
+<!--
+  Reference design for Supabase Auth's "Confirm signup" template.
+  Paste into: Supabase Dashboard → Authentication → Email Templates → Confirm signup
+  Supabase-native tokens (do NOT rename these — they're substituted by Supabase itself):
+    {{ .ConfirmationURL }}  — the confirm link
+    {{ .Email }}            — the signer's email
+  Requires custom SMTP (Resend) wired up first so this sends from support@cent.rw
+  instead of Supabase's shared sender — see EMAIL_SETUP.md.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Welcome to CENT</title></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Inter',Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a">
+<tr><td align="center" style="padding:24px 16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#111111;border:1px solid #222222;border-radius:12px;overflow:hidden">
+
+  <tr>
+    <td style="background:#111111;padding:28px 32px;border-bottom:1px solid #1f1f1f;text-align:center">
+      <img src="https://cent.rw/assets/images/white%20logo.png" alt="CENT" height="36" style="display:inline-block;border:0">
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:32px">
+      <h2 style="font-size:20px;font-weight:700;color:#f5f5f5;margin:0 0 20px">Welcome to CENT 🖤</h2>
+      <p style="color:#a3a3a3;margin:0 0 20px;font-size:14px;line-height:1.6">
+        Thanks for creating an account with <strong style="color:#f5f5f5">{{ .Email }}</strong>.
+        Confirm your email to start shopping Rwanda's finest streetwear.
+      </p>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+        <tr><td style="background:#f5f5f5;border-radius:6px">
+          <a href="{{ .ConfirmationURL }}" style="display:inline-block;color:#0a0a0a;font-weight:700;padding:12px 28px;text-decoration:none;font-size:14px">Confirm My Email &rarr;</a>
+        </td></tr>
+      </table>
+
+      <p style="color:#525252;font-size:12px;margin:0;line-height:1.6">If you didn't create this account, you can safely ignore this email.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:20px 32px;border-top:1px solid #1f1f1f;text-align:center">
+      <p style="color:#525252;font-size:12px;margin:0">CENT Streetwear &mdash; Kigali, Rwanda</p>
+      <p style="color:#525252;font-size:12px;margin:6px 0 0"><a href="https://cent.rw" style="color:#777777;text-decoration:none">cent.rw</a></p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

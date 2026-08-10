@@ -75,7 +75,7 @@ async function renderPaymentChannels() {
   }
 
   if (!paymentChannels.length) {
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">No payment methods available right now. Contact us at admin@cent.rw.</p>';
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">No payment methods available right now. Contact us at support@cent.rw.</p>';
     return;
   }
 

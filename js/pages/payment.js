@@ -93,7 +93,7 @@ async function loadChannels() {
     const channels = await getPaymentChannels();
 
     if (!channels.length) {
-      list.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">No payment channels available. Contact us at admin@cent.rw.</p>';
+      list.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">No payment channels available. Contact us at support@cent.rw.</p>';
       return;
     }
 

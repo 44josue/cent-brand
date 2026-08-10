@@ -1,7 +1,7 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { requireAuth, getCurrentProfile, updateProfile, signOut, getUser, updateEmail, updatePassword, reauthenticate } from '../lib/auth.js';
-import { getOrdersByCustomer } from '../lib/api.js';
+import { getOrdersByCustomer, callEdge } from '../lib/api.js';
 import { supabase } from '../lib/supabase.js';
 import { formatRWF, formatDate, modal, toast, statusBadge, shortToken, initTheme, initPasswordToggles } from '../lib/utils.js';
 import { updateCartBadges } from '../lib/cart.js';
@@ -107,6 +107,11 @@ function renderAccount(profile, orders, wishlist) {
       btn.classList.add('active');
       document.getElementById(`tab-${btn.dataset.tab}`)?.classList.add('active');
     });
+  });
+
+  // Order receipt/story downloads
+  document.querySelectorAll('.order-receipt-btn').forEach(btn => {
+    btn.addEventListener('click', () => downloadReceipt(btn));
   });
 
   // Track order tab
@@ -327,8 +332,10 @@ function renderOrders(orders) {
               <td>${statusBadge(o.status)}</td>
               <td style="font-size:var(--text-sm);color:var(--text-muted)">${(o.order_items || []).reduce((s, i) => s + i.quantity, 0)} items</td>
               <td style="font-weight:700;font-size:var(--text-sm)">${formatRWF(o.total_cents)}</td>
-              <td>
+              <td style="display:flex;gap:var(--space-2);justify-content:flex-end;flex-wrap:wrap">
                 <a href="${pageUrl('order-tracking/')}?token=${o.public_token}" class="btn btn-secondary btn-sm">Track</a>
+                <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${o.id}" data-format="pdf">Receipt</button>
+                <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${o.id}" data-format="image">Story</button>
               </td>
             </tr>
           `).join('')}
@@ -336,6 +343,21 @@ function renderOrders(orders) {
       </table>
     </div>
   `;
+}
+
+async function downloadReceipt(btn) {
+  const { id, format } = btn.dataset;
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const { url } = await callEdge('get-order-receipt', { orderId: id, format });
+    window.open(url, '_blank');
+  } catch (err) {
+    toast.error(err.message || 'Could not load receipt.');
+  }
+  btn.disabled = false;
+  btn.textContent = original;
 }
 
 function renderWishlist(items) {

@@ -60,6 +60,22 @@ function renderForm(container, product, categories, collections, collaborators =
           </div>
         </div>
 
+        <!-- Product Images -->
+        <div class="card" style="margin-bottom:var(--space-6)">
+          <h3 style="margin-bottom:var(--space-2)">Product Images</h3>
+          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-3)">
+            ${!productId ? 'Save the product first to add images.' : 'Shown on the product card and as the default product photo. The starred image is primary.'}
+          </p>
+          <div id="pf-images-grid" style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-3)"></div>
+          ${productId ? `
+            <label class="btn btn-secondary btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Add Image
+              <input type="file" id="pf-image-input" accept="image/*,video/mp4,video/webm,video/quicktime" multiple style="display:none">
+            </label>
+          ` : ''}
+        </div>
+
         <!-- Variants -->
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">
@@ -143,6 +159,19 @@ function renderForm(container, product, categories, collections, collaborators =
 
   // Bind existing variant rows
   document.querySelectorAll('.variant-row').forEach(row => bindVariantRow(row));
+
+  // Product-level images
+  if (productId) {
+    loadProductImages(productId);
+    document.getElementById('pf-image-input')?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      e.target.value = '';
+      for (const file of files) {
+        await uploadMedia(file, productId);
+      }
+      loadProductImages(productId);
+    });
+  }
 
   // Save button
   document.getElementById('save-btn')?.addEventListener('click', saveProduct);
@@ -232,29 +261,23 @@ function bindVariantRow(row) {
 
     try {
       const saved = await upsertVariant(data);
-      // Update data-id so subsequent saves update the same row
+      let activeRow = row;
       if (isNew && saved?.id) {
-        row.dataset.id = saved.id;
-        // Add delete button now that row is persisted
-        if (!row.querySelector('.vr-delete-btn')) {
-          const del = document.createElement('button');
-          del.className = 'btn btn-ghost btn-sm vr-delete-btn';
-          del.style.color = 'var(--error)';
-          del.textContent = '✕';
-          row.querySelector('.vr-notify-badge').before(del);
-          row.querySelector('.vr-delete-btn').addEventListener('click', async () => {
-            if (!confirm('Delete this variant?')) return;
-            try { await deleteVariant(row.dataset.id); row.remove(); toast.success('Deleted.'); }
-            catch (err) { toast.error(err.message || 'Could not delete.'); }
-          });
-        }
+        // Re-render the row fully persisted so the Images button + media panel
+        // (hidden for brand-new, unsaved variants) appear without a page reload.
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = variantRow(saved).trim();
+        activeRow = wrapper.firstElementChild;
+        row.replaceWith(activeRow);
+        bindVariantRow(activeRow);
       }
       toast.success('Variant saved.');
       if (data.stock === 0) {
-        const count = await getRestockSubscriberCount(row.dataset.id).catch(() => 0);
-        const badge = row.querySelector('.vr-notify-badge');
+        const count = await getRestockSubscriberCount(activeRow.dataset.id).catch(() => 0);
+        const badge = activeRow.querySelector('.vr-notify-badge');
         if (badge && count > 0) badge.textContent = `${count} waiting`;
       }
+      if (activeRow !== row) return; // freshly bound row already has default button state
     } catch (err) {
       toast.error(err.message || 'Could not save variant.');
     }
@@ -353,10 +376,57 @@ async function uploadMedia(file, productId) {
     const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true });
     if (error) throw error;
     const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path);
-    await insertProductMedia({ product_id: productId, url: publicUrl, is_primary: false, sort_order: 99 });
+    const { count } = await supabase
+      .from('product_media').select('id', { count: 'exact', head: true })
+      .eq('product_id', productId).is('variant_id', null);
+    await insertProductMedia({ product_id: productId, url: publicUrl, is_primary: !count, sort_order: 99 });
     toast.success(`${isVideo ? 'Video' : 'Image'} uploaded.`);
   } catch (err) {
     toast.error(err.message || 'Upload failed.');
+  }
+}
+
+async function loadProductImages(productId) {
+  const grid = document.getElementById('pf-images-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="skeleton" style="width:72px;height:96px"></div>';
+  try {
+    const { data: media, error } = await supabase
+      .from('product_media')
+      .select('id, url, is_primary, sort_order')
+      .eq('product_id', productId)
+      .is('variant_id', null)
+      .order('sort_order');
+    if (error) throw error;
+
+    grid.innerHTML = media.length ? media.map(m => {
+      const isVideo = m.url?.match(/\.(mp4|webm|mov)$/i);
+      return `
+        <div class="image-thumb" data-id="${m.id}" style="position:relative;width:72px;height:96px;border-radius:var(--radius);overflow:hidden;background:var(--bg-card);border:2px solid ${m.is_primary ? 'var(--accent)' : 'transparent'}">
+          ${isVideo
+            ? `<video src="${m.url}" style="width:100%;height:100%;object-fit:cover"></video>`
+            : `<img src="${m.url}" style="width:100%;height:100%;object-fit:cover">`}
+          ${!m.is_primary ? `<button class="pf-img-primary-btn" data-id="${m.id}" title="Set as primary" style="position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer">★</button>` : ''}
+          <button class="pf-img-del-btn" data-id="${m.id}" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+      `;
+    }).join('') : '<span style="font-size:var(--text-xs);color:var(--text-muted)">No images yet</span>';
+
+    grid.querySelectorAll('.pf-img-primary-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await setPrimaryMedia(productId, btn.dataset.id);
+        loadProductImages(productId);
+      });
+    });
+    grid.querySelectorAll('.pf-img-del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this image?')) return;
+        await deleteProductMedia(btn.dataset.id);
+        loadProductImages(productId);
+      });
+    });
+  } catch (err) {
+    grid.innerHTML = '<span style="font-size:var(--text-xs);color:var(--error)">Could not load images.</span>';
   }
 }
 

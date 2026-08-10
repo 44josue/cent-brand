@@ -18,9 +18,14 @@
       padding: var(--space-8) 0 var(--space-16);
       align-items: start;
     }
-    .gallery { position: sticky; top: calc(var(--nav-height) + var(--space-4)); }
+    .gallery { position: sticky; top: calc(var(--nav-height) + var(--space-4)); width: 100%; display: flex; flex-direction: column; align-items: center; }
     .gallery-main {
       aspect-ratio: 3/4;
+      max-height: calc(100vh - var(--nav-height) - 172px);
+      width: auto;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
       border-radius: var(--radius-xl);
       overflow: hidden;
       background: var(--bg-card);
@@ -261,8 +266,8 @@
           <h5>Company</h5>
           <ul>
             <li><a href="../about/">About CENT</a></li>
-            <li><a href="mailto:info@cent.rw">info@cent.rw</a></li>
-            <li><a href="tel:+250788123456">+250 788 123 456</a></li>
+            <li><a href="mailto:support@cent.rw">support@cent.rw</a></li>
+            <li><a href="tel:+250794084321">+250 794 084 321</a></li>
             <li><span style="color:var(--text-muted)">Kigali, Rwanda</span></li>
           </ul>
         </div>

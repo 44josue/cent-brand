@@ -1,0 +1,47 @@
+<!--
+  Starting point for Admin → Email campaigns (HTML mode).
+  From: support@cent.rw
+  Tokens: {{subject_heading}} {{body_html}} {{cta_url}} {{cta_label}}
+  The unsubscribe footer is appended automatically by send-email-blast — don't duplicate it here.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>{{subject_heading}} — CENT</title></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Inter',Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a">
+<tr><td align="center" style="padding:24px 16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#111111;border:1px solid #222222;border-radius:12px;overflow:hidden">
+
+  <tr>
+    <td style="background:#111111;padding:28px 32px;border-bottom:1px solid #1f1f1f;text-align:center">
+      <img src="https://cent.rw/assets/images/white%20logo.png" alt="CENT" height="36" style="display:inline-block;border:0">
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:32px">
+      <h2 style="font-size:22px;font-weight:800;color:#f5f5f5;margin:0 0 16px">{{subject_heading}}</h2>
+      <div style="color:#a3a3a3;font-size:14px;line-height:1.7;margin-bottom:24px">
+        {{body_html}}
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0">
+        <tr><td style="background:#f5f5f5;border-radius:6px">
+          <a href="{{cta_url}}" style="display:inline-block;color:#0a0a0a;font-weight:700;padding:12px 28px;text-decoration:none;font-size:14px">{{cta_label}} &rarr;</a>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:20px 32px;border-top:1px solid #1f1f1f;text-align:center">
+      <p style="color:#525252;font-size:12px;margin:0">CENT Streetwear &mdash; Kigali, Rwanda</p>
+      <p style="color:#525252;font-size:12px;margin:6px 0 0"><a href="https://cent.rw" style="color:#777777;text-decoration:none">cent.rw</a></p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

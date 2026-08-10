@@ -77,6 +77,8 @@ function renderOrder(container, order, proofUrl) {
   const submission = order.payment_submissions?.[0] || null;
 
   actionsEl.innerHTML = `
+    <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${order.id}" data-format="pdf">⬇ Receipt</button>
+    <button class="btn btn-ghost btn-sm order-receipt-btn" data-id="${order.id}" data-format="image">⬇ Story Image</button>
     ${isPending ? `
       <button class="btn btn-success btn-sm" id="verify-btn">✓ Verify Payment</button>
       <button class="btn btn-danger btn-sm" id="reject-btn">✕ Reject</button>
@@ -88,6 +90,23 @@ function renderOrder(container, order, proofUrl) {
       <button class="btn btn-ghost btn-sm" id="cancel-btn">Cancel Order</button>
     ` : ''}
   `;
+
+  actionsEl.querySelectorAll('.order-receipt-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { id, format } = btn.dataset;
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        const { url } = await callEdge('get-order-receipt', { orderId: id, format });
+        window.open(url, '_blank');
+      } catch (err) {
+        toast.error(err.message || 'Could not load receipt.');
+      }
+      btn.disabled = false;
+      btn.textContent = original;
+    });
+  });
 
   const proofHtml = proofUrl ? `
     <div style="margin-top:var(--space-4)">
@@ -186,7 +205,7 @@ function renderOrder(container, order, proofUrl) {
         </div>
 
         <div style="margin-top:var(--space-4);font-size:var(--text-xs);color:var(--text-muted)">
-          Created ${formatDateTime(order.created_at)} &middot; Token: <span class="font-mono">${order.public_token}</span>
+          Created ${formatDateTime(order.created_at)} &middot; Tracking Code: <span class="font-mono">${order.short_token || shortToken(order.public_token)}</span>
         </div>
       </div>
     </div>
