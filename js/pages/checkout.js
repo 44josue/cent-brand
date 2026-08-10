@@ -3,7 +3,7 @@ import { renderFooter } from '../components/footer.js';
 import { callEdge, validatePromoCode, getPaymentChannels } from '../lib/api.js';
 import { formatRWF, districts, districtSectors, toast } from '../lib/utils.js';
 import { syncCart, updateCartBadges } from '../lib/cart.js';
-import { getCurrentProfile, getSession, updateProfile } from '../lib/auth.js';
+import { getCurrentProfile, getSession, updateProfile, resendVerificationEmail } from '../lib/auth.js';
 import { pageUrl } from '../lib/paths.js';
 
 renderNav();
@@ -22,6 +22,7 @@ function channelLogo(name) {
 }
 
 let isGuest = false;
+let currentSession = null;
 
 init();
 
@@ -35,6 +36,7 @@ async function init() {
   }
 
   const session = await getSession();
+  currentSession = session;
   isGuest = !session;
 
   renderAuthBanner(session);
@@ -308,6 +310,22 @@ async function handleSubmit(e) {
   e.preventDefault();
   if (!validateForm()) {
     toast.error('Please fix the errors above.');
+    return;
+  }
+
+  if (!isGuest && !currentSession?.user?.email_confirmed_at) {
+    const errorBanner = document.getElementById('error-banner');
+    errorBanner.classList.remove('hidden');
+    errorBanner.innerHTML = `Please verify your email before checking out. <a href="#" id="resend-verify-link" style="color:inherit;text-decoration:underline">Resend verification email</a>`;
+    document.getElementById('resend-verify-link')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      try {
+        await resendVerificationEmail(currentSession.user.email);
+        toast.success('Verification email sent — check your inbox.');
+      } catch (err) {
+        toast.error(err.message || 'Could not resend email.');
+      }
+    });
     return;
   }
 

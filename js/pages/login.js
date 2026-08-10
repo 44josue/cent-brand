@@ -92,7 +92,11 @@ function setupSignUp() {
     try {
       const { user } = await signUp(email, password, name);
       if (user) await mergeCart(user.id);
-      toast.success('Account created! Welcome to CENT.');
+      if (user && !user.email_confirmed_at) {
+        toast.success('Account created! Check your email to verify your account.');
+      } else {
+        toast.success('Account created! Welcome to CENT.');
+      }
       window.location.href = redirectTo;
     } catch (err) {
       if (errorEl) {

@@ -305,7 +305,36 @@ function initSearch() {
 
 async function loadAuthState() {
   try {
-    const { getCurrentProfile, getPendingOrderForUser } = await import('../lib/auth.js');
+    const { getCurrentProfile, getPendingOrderForUser, getSession, resendVerificationEmail } = await import('../lib/auth.js');
+    const session = await getSession();
+    if (session?.user && !session.user.email_confirmed_at && !sessionStorage.getItem('cent_verify_banner_dismissed')) {
+      const navEl = document.getElementById('nav-placeholder');
+      if (navEl && !document.getElementById('verify-email-banner')) {
+        navEl.insertAdjacentHTML('afterend', `
+          <div id="verify-email-banner" style="background:var(--warning);color:#1a1a0a;padding:var(--space-3) var(--space-4);display:flex;align-items:center;justify-content:center;gap:var(--space-3);flex-wrap:wrap;font-size:var(--text-sm);font-weight:600;text-align:center">
+            <span>Verify your email to unlock checkout.</span>
+            <a href="mailto:" style="color:inherit;text-decoration:underline">Open Email App</a>
+            <button id="verify-banner-resend" style="background:none;border:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;font-weight:600;padding:0">Resend Email</button>
+            <button id="verify-banner-close" aria-label="Dismiss" style="background:none;border:none;color:inherit;cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 var(--space-2)">✕</button>
+          </div>
+        `);
+        document.getElementById('verify-banner-close')?.addEventListener('click', () => {
+          document.getElementById('verify-email-banner')?.remove();
+          sessionStorage.setItem('cent_verify_banner_dismissed', '1');
+        });
+        document.getElementById('verify-banner-resend')?.addEventListener('click', async () => {
+          try {
+            await resendVerificationEmail(session.user.email);
+            const { toast } = await import('../lib/utils.js');
+            toast.success('Verification email sent — check your inbox.');
+          } catch (err) {
+            const { toast } = await import('../lib/utils.js');
+            toast.error(err.message || 'Could not resend email.');
+          }
+        });
+      }
+    }
+
     const profile = await getCurrentProfile();
     if (!profile) return;
 
