@@ -64,6 +64,10 @@ export async function signIn(email, password) {
   return data;
 }
 
+// The profiles row (including full_name) is created server-side by the
+// handle_new_user() DB trigger, which reads full_name back out of this
+// options.data payload — there's no RLS INSERT policy that would let this
+// client upsert its own profile row directly, so don't try that here again.
 export async function signUp(email, password, fullName) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -74,16 +78,6 @@ export async function signUp(email, password, fullName) {
     },
   });
   if (error) throw error;
-
-  if (data.user) {
-    await supabase.from('profiles').upsert({
-      id: data.user.id,
-      email,
-      full_name: fullName,
-      role: 'customer',
-    });
-  }
-
   return data;
 }
 
