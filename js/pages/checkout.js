@@ -1,9 +1,10 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { callEdge, validatePromoCode, getPaymentChannels } from '../lib/api.js';
-import { formatRWF, districts, districtSectors, toast } from '../lib/utils.js';
-import { syncCart, updateCartBadges } from '../lib/cart.js';
+import { formatRWF, districts, districtSectors, toast, copyToClipboard } from '../lib/utils.js';
+import { syncCart, updateCartBadges, clearLocalCart } from '../lib/cart.js';
 import { getCurrentProfile, getSession, updateProfile, resendVerificationEmail } from '../lib/auth.js';
+import { supabase } from '../lib/supabase.js';
 import { pageUrl } from '../lib/paths.js';
 
 renderNav();
@@ -13,6 +14,7 @@ let cartState = null;
 let appliedPromo = null;
 let paymentChannels = [];
 let payOnArrivalChosen = false;
+let proofFile = null;
 
 function channelLogo(name) {
   const n = (name || '').toLowerCase();
@@ -100,11 +102,96 @@ async function renderPaymentChannels() {
       label.classList.add('selected');
       label.querySelector('input').checked = true;
       payOnArrivalChosen = label.dataset.id === 'poa';
+
       const hint = document.getElementById('submit-hint');
-      if (hint) hint.textContent = payOnArrivalChosen
-        ? 'Pay in cash when your order arrives. No card required.'
-        : 'You\'ll submit payment details on the next step. No card required.';
+      const instructionsWrap = document.getElementById('channel-instructions');
+      const poaBanner = document.getElementById('poa-banner');
+      const mobileFields = document.getElementById('mobile-payment-fields');
+      const submitBtn = document.getElementById('submit-btn');
+
+      if (payOnArrivalChosen) {
+        instructionsWrap?.classList.add('hidden');
+        if (poaBanner) poaBanner.style.display = 'block';
+        if (mobileFields) mobileFields.style.display = 'none';
+        if (hint) hint.textContent = 'Pay in cash when your order arrives. No card required.';
+        if (submitBtn) submitBtn.textContent = 'Place Order';
+      } else {
+        if (poaBanner) poaBanner.style.display = 'none';
+        if (mobileFields) mobileFields.style.display = 'block';
+        if (hint) hint.textContent = 'We\'ll verify your payment and confirm your order.';
+        if (submitBtn) submitBtn.textContent = 'Submit Payment & Place Order';
+        const channel = paymentChannels.find(c => c.id === label.dataset.id);
+        if (channel) showInstructions(channel);
+      }
     });
+  });
+
+  if (paymentChannels.length > 0) showInstructions(paymentChannels[0]);
+}
+
+function showInstructions(channel) {
+  const wrap = document.getElementById('channel-instructions');
+  const body = document.getElementById('instructions-body');
+  if (!wrap || !body) return;
+
+  const subtotal = cartState.items.reduce((s, i) => s + i.priceCents * i.quantity, 0);
+  const amount = formatRWF(subtotal - calcDiscount(subtotal));
+  const steps = [
+    `Open your ${channel.name} app or dial the USSD code`,
+    `Send <strong>${amount}</strong> to <strong class="font-mono">${channel.number}</strong>`,
+    `Note the transaction reference code from your confirmation SMS`,
+    `Fill in the reference code (and screenshot, optional) further down this page`,
+  ];
+
+  body.innerHTML = steps.map((s, i) => `
+    <div class="step-instruction">
+      <div class="step-num-circle">${i + 1}</div>
+      <div style="font-size:var(--text-sm);color:var(--text-secondary);padding-top:4px">${s}</div>
+    </div>
+  `).join('');
+
+  const numberRow = `<div class="channel-number copy-btn" data-copy="${channel.number}" title="Click to copy" style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border);font-weight:700">
+    ${channel.number} <span style="font-size:var(--text-xs);color:var(--text-muted);font-weight:400"> ↗ copy</span>
+  </div>`;
+  body.innerHTML += numberRow;
+  body.querySelector('.channel-number')?.addEventListener('click', () => {
+    copyToClipboard(channel.number);
+    toast.success('Number copied!');
+  });
+
+  if (channel.instructions) {
+    body.innerHTML += `<p style="font-size:var(--text-sm);color:var(--text-muted);margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border)">${channel.instructions}</p>`;
+  }
+
+  wrap.classList.remove('hidden');
+}
+
+function setupFileUpload() {
+  const input = document.getElementById('proof-upload');
+  const zone = document.getElementById('proof-drop-zone');
+  const filename = document.getElementById('proof-filename');
+  if (!input || !zone) return;
+
+  zone.addEventListener('click', () => input.click());
+
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (file) {
+      proofFile = file;
+      if (filename) { filename.textContent = `✓ ${file.name}`; filename.style.display = 'block'; }
+    }
+  });
+
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      proofFile = file;
+      if (filename) { filename.textContent = `✓ ${file.name}`; filename.style.display = 'block'; }
+    }
   });
 }
 
@@ -146,6 +233,9 @@ function renderSummary() {
       <span class="order-summary-total">${formatRWF(total)}</span>
     </div>
   `;
+
+  const poaAmountText = document.getElementById('poa-amount-text');
+  if (poaAmountText) poaAmountText.textContent = formatRWF(total);
 }
 
 function populateDistricts() {
@@ -187,6 +277,8 @@ function setupEvents() {
 
   // Use account info
   document.getElementById('use-account-info-btn')?.addEventListener('click', () => prefillFromProfile(true));
+
+  setupFileUpload();
 
   // Promo code
   document.getElementById('promo-apply-btn')?.addEventListener('click', applyPromo);
@@ -340,15 +432,12 @@ async function handleSubmit(e) {
   if (!rawChannelChoice) {
     toast.error('Please select a payment method.');
     btn.disabled = false;
-    btn.textContent = 'Place Order';
+    btn.textContent = payOnArrivalChosen ? 'Place Order' : 'Submit Payment & Place Order';
     return;
   }
   // "Pay on Arrival" isn't a real payment channel row — orders still need one on
-  // record, so fall back to the first real channel; the actual POA choice is
-  // carried via sessionStorage and finalized on the next (payment) step.
+  // record, so fall back to the first real channel.
   const paymentChannelId = rawChannelChoice === 'poa' ? paymentChannels[0]?.id : rawChannelChoice;
-  if (payOnArrivalChosen) sessionStorage.setItem('cent_poa', '1');
-  else sessionStorage.removeItem('cent_poa');
 
   const items = cartState.items.map(i => ({
     variantId: i.variantId,
@@ -397,8 +486,38 @@ async function handleSubmit(e) {
         }
       } catch { /* non-critical — order already placed */ }
     }
+
     sessionStorage.removeItem('cent_checkout');
-    window.location.href = `${pageUrl('checkout-payment/')}?order_id=${result.orderId}&token=${result.token}&total=${totalCents}`;
+
+    // The order now exists no matter what happens below — never let a payment-
+    // submission failure trigger a full retry, which would re-run place-order
+    // and create a duplicate order. Submit it best-effort and always proceed.
+    if (!payOnArrivalChosen) {
+      try {
+        let proofPath = null;
+        if (proofFile) {
+          const ext = proofFile.name.split('.').pop();
+          proofPath = `${result.orderId}-${Date.now()}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from('payment-proofs').upload(proofPath, proofFile);
+          if (uploadError) { console.error('proof upload error:', uploadError); proofPath = null; }
+        }
+        const refCode = document.getElementById('ref-code')?.value.trim() || null;
+        await callEdge('submit-payment', {
+          token: result.token,
+          payerName: shippingAddress.fullName,
+          payerPhone: shippingAddress.phone,
+          referenceCode: refCode,
+          amountPaidCents: totalCents,
+          proofPath,
+        });
+      } catch (paymentErr) {
+        console.error('submit-payment error:', paymentErr);
+        toast.error('Order placed, but we couldn\'t save your payment details. You can add them from the order tracking page.');
+      }
+    }
+
+    await clearLocalCart();
+    window.location.href = `${pageUrl('order-tracking/')}?token=${result.token}&submitted=1`;
   } catch (err) {
     console.error('place-order error:', err);
     errorBanner.textContent = err.message || 'Something went wrong. Please try again.';
