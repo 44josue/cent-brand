@@ -1,11 +1,15 @@
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
-import { getOrderByToken } from '../lib/api.js';
+import { getOrderByToken, callEdge } from '../lib/api.js';
 import { formatRWF, formatDateTime, getParam, toast, copyToClipboard, shortToken, statusBadge, paymentBadge } from '../lib/utils.js';
 import { supabase } from '../lib/supabase.js';
 import { updateCartBadges } from '../lib/cart.js';
-import { downloadReceiptPDF, shareReceiptImage, shareReceiptPDF } from '../lib/receipt.js';
 import { pageUrl } from '../lib/paths.js';
+
+async function getReceiptUrl(format, blurPrice = true) {
+  const { url } = await callEdge('get-order-receipt', { token, format, blurPrice });
+  return url;
+}
 
 renderNav();
 renderFooter();
@@ -141,6 +145,7 @@ function renderOrder(order) {
         </div>
       </div>
       <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+        ${order.payment_status === 'verified' ? `
         <button class="btn btn-secondary btn-sm" id="share-btn">
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Z"/>
@@ -153,6 +158,7 @@ function renderOrder(order) {
           </svg>
           Receipt
         </button>
+        ` : ''}
         ${['awaiting_payment_submission', 'awaiting_payment_verification'].includes(order.status) ? `
         <button class="btn btn-sm" id="cancel-btn" style="color:var(--error);border-color:var(--error);background:transparent">
           Cancel Order
@@ -207,7 +213,7 @@ function renderOrder(order) {
         <div class="card">
           <h3 style="font-size:var(--text-base);margin-bottom:var(--space-3)">Order Code</h3>
           <div class="font-mono copy-btn" id="tracking-token-display" style="font-size:var(--text-lg);font-weight:700;letter-spacing:0.12em;cursor:pointer;color:var(--text-primary)" title="Click to copy">#${shortToken(token)}</div>
-          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-2)">Click to copy your full tracking code.</p>
+          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-2)">Click to copy your tracking code.</p>
         </div>
       </div>
     </div>
@@ -222,10 +228,11 @@ function renderOrder(order) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>';
     try {
-      await downloadReceiptPDF(order);
+      const url = await getReceiptUrl('pdf');
+      window.open(url, '_blank');
     } catch (err) {
       console.error('receipt error:', err);
-      toast.error('Could not generate receipt.');
+      toast.error(err.message || 'Could not generate receipt.');
     }
     btn.disabled = false;
     btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg> Receipt`;
@@ -233,17 +240,17 @@ function renderOrder(order) {
 
   // Copy token
   document.getElementById('tracking-token-display')?.addEventListener('click', (e) => {
-    copyToClipboard(token, e.currentTarget);
-    toast.success('Token copied!');
+    copyToClipboard(shortToken(token), e.currentTarget);
+    toast.success('Code copied!');
   });
 
   // Receipt actions
   document.getElementById('receipt-token')?.addEventListener('click', () => {
-    copyToClipboard(token);
+    copyToClipboard(shortToken(token));
     toast.success('Order code copied!');
   });
   document.getElementById('copy-receipt-btn')?.addEventListener('click', () => {
-    copyToClipboard(token);
+    copyToClipboard(shortToken(token));
     toast.success('Order code copied!');
   });
   document.getElementById('share-receipt-btn')?.addEventListener('click', async () => {
@@ -300,10 +307,11 @@ function openShareChoiceModal(order) {
         </div>
       </div>
 
-      <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);margin-bottom:var(--space-6);cursor:pointer">
-        <input type="checkbox" id="share-blur-code" checked>
-        Blur order code (recommended for public posts)
+      <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);margin-bottom:var(--space-2);cursor:pointer">
+        <input type="checkbox" id="share-show-price">
+        Show price in shared image
       </label>
+      <p style="font-size:var(--text-xs);color:var(--text-muted);margin:0 0 var(--space-6)">Your tracking code is always hidden on shared images.</p>
 
       <div style="display:flex;gap:var(--space-2)">
         <button type="button" class="btn btn-ghost" id="share-choice-cancel" style="flex:1">Cancel</button>
@@ -328,17 +336,30 @@ function openShareChoiceModal(order) {
   document.getElementById('share-choice-cancel')?.addEventListener('click', close);
 
   document.getElementById('share-choice-go')?.addEventListener('click', async () => {
-    const blurCode = document.getElementById('share-blur-code').checked;
+    const showPrice = document.getElementById('share-show-price').checked;
     const goBtn = document.getElementById('share-choice-go');
     goBtn.disabled = true;
     goBtn.innerHTML = '<span class="spinner"></span>';
     try {
-      if (format === 'pdf') await shareReceiptPDF(order, { blurCode });
-      else await shareReceiptImage(order, { blurCode });
+      const url = await getReceiptUrl(format, !showPrice);
+      const shortCode = shortToken(token);
+      const fileName = `CENT-${format === 'pdf' ? 'Receipt' : 'Story'}-${shortCode}.${format === 'pdf' ? 'pdf' : 'png'}`;
+
+      if (navigator.share && navigator.canShare) {
+        const blob = await (await fetch(url)).blob();
+        const file = new File([blob], fileName, { type: blob.type });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'CENT', text: 'Every Cent Matters. 🖤 cent.rw' });
+          close();
+          return;
+        }
+      }
+      window.open(url, '_blank');
       close();
     } catch (err) {
+      if (err?.name === 'AbortError') { close(); return; }
       console.error('share receipt error:', err);
-      toast.error('Could not share receipt.');
+      toast.error(err.message || 'Could not share receipt.');
       goBtn.disabled = false;
       goBtn.textContent = 'Share';
     }
