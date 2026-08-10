@@ -94,10 +94,13 @@ function setupSignUp() {
       if (user) await mergeCart(user.id);
       if (user && !user.email_confirmed_at) {
         toast.success('Account created! Check your email to verify your account.');
+        // Give the user time to actually read this before we navigate away —
+        // an immediate redirect destroys the toast before it's ever seen.
+        setTimeout(() => { window.location.href = redirectTo; }, 1800);
       } else {
         toast.success('Account created! Welcome to CENT.');
+        window.location.href = redirectTo;
       }
-      window.location.href = redirectTo;
     } catch (err) {
       if (errorEl) {
         errorEl.textContent = err.message || 'Could not create account.';
