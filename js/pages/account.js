@@ -390,15 +390,17 @@ function renderOrders(orders) {
 
 async function downloadReceipt(btn) {
   const { id, format } = btn.dataset;
-  // Open synchronously here (still within the click's call stack) so the
-  // later location change isn't blocked as an unrequested popup — the
-  // confirm dialog and network request below are both async gaps.
-  const tab = window.open('', '_blank');
   // Tracking code is always hidden on the shared image regardless of this
   // choice — this only controls whether the price is visible too.
   const blurPrice = format === 'image'
     ? !(await confirmDialog('Show the price on this image?', { title: 'Show price?' }))
     : true;
+  // Open the tab now — right after the user's click (either the original
+  // button click for PDF, or their Yes/No click in the dialog above), so it
+  // still counts as a direct result of user action. Opening it any earlier
+  // (before the dialog) would yank them to a blank tab before they'd even
+  // answered; any later (after the fetch below) risks the popup blocker.
+  const tab = window.open('', '_blank');
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = '...';
