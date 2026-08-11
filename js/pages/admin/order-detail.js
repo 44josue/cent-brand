@@ -107,10 +107,14 @@ function renderOrder(container, order, proofUrl) {
       const original = btn.textContent;
       btn.disabled = true;
       btn.textContent = '...';
+      // Open synchronously on the click so the later location change isn't
+      // blocked as an unrequested popup once the async request resolves.
+      const tab = window.open('', '_blank');
       try {
         const { url } = await callEdge('get-order-receipt', { orderId: id, format, blurPrice });
-        window.open(url, '_blank');
+        if (tab) tab.location.href = url; else window.open(url, '_blank');
       } catch (err) {
+        if (tab) tab.close();
         toast.error(err.message || 'Could not load receipt.');
       }
       btn.disabled = false;

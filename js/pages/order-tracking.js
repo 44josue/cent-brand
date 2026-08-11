@@ -227,10 +227,15 @@ function renderOrder(order) {
     const btn = document.getElementById('receipt-btn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>';
+    // Open the tab synchronously on the click, then point it at the URL once
+    // ready — awaiting first makes browsers treat the later window.open() as
+    // a non-user-gesture popup and silently block it.
+    const tab = window.open('', '_blank');
     try {
       const url = await getReceiptUrl('pdf');
-      window.open(url, '_blank');
+      if (tab) tab.location.href = url; else window.open(url, '_blank');
     } catch (err) {
+      if (tab) tab.close();
       console.error('receipt error:', err);
       toast.error(err.message || 'Could not generate receipt.');
     }
@@ -340,12 +345,17 @@ function openShareChoiceModal(order) {
     const goBtn = document.getElementById('share-choice-go');
     goBtn.disabled = true;
     goBtn.innerHTML = '<span class="spinner"></span>';
+    // Open synchronously on the click so the browser doesn't treat the later
+    // location change as an unrequested popup and block it (only used as a
+    // fallback below, when Web Share isn't available).
+    const tab = window.open('', '_blank');
     try {
       const url = await getReceiptUrl(format, !showPrice);
       const shortCode = shortToken(token);
       const fileName = `CENT-${format === 'pdf' ? 'Receipt' : 'Story'}-${shortCode}.${format === 'pdf' ? 'pdf' : 'png'}`;
 
       if (navigator.share && navigator.canShare) {
+        if (tab) tab.close();
         const blob = await (await fetch(url)).blob();
         const file = new File([blob], fileName, { type: blob.type });
         if (navigator.canShare({ files: [file] })) {
@@ -354,9 +364,10 @@ function openShareChoiceModal(order) {
           return;
         }
       }
-      window.open(url, '_blank');
+      if (tab) tab.location.href = url; else window.open(url, '_blank');
       close();
     } catch (err) {
+      if (tab) tab.close();
       if (err?.name === 'AbortError') { close(); return; }
       console.error('share receipt error:', err);
       toast.error(err.message || 'Could not share receipt.');

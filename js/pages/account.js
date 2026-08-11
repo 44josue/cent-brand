@@ -396,10 +396,14 @@ async function downloadReceipt(btn) {
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = '...';
+  // Open synchronously here (still within the click's call stack) so the
+  // later location change isn't blocked as an unrequested popup.
+  const tab = window.open('', '_blank');
   try {
     const { url } = await callEdge('get-order-receipt', { orderId: id, format, blurPrice });
-    window.open(url, '_blank');
+    if (tab) tab.location.href = url; else window.open(url, '_blank');
   } catch (err) {
+    if (tab) tab.close();
     toast.error(err.message || 'Could not load receipt.');
   }
   btn.disabled = false;
