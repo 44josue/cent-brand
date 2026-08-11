@@ -148,6 +148,32 @@ export const modal = {
   },
 };
 
+// ── CONFIRM DIALOG ───────────────────────────────────────────────────────────
+
+/** Site-styled replacement for window.confirm(). Resolves true/false. */
+export function confirmDialog(message, { title = '', okLabel = 'Yes', cancelLabel = 'No' } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:var(--space-6)';
+    overlay.innerHTML = `
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);max-width:360px;width:100%;padding:var(--space-6)">
+        ${title ? `<h3 style="font-size:var(--text-lg);margin-bottom:var(--space-3)">${title}</h3>` : ''}
+        <p style="font-size:var(--text-sm);color:var(--text-muted);white-space:pre-line;margin:0 0 var(--space-6)">${message}</p>
+        <div style="display:flex;gap:var(--space-2)">
+          <button type="button" class="btn btn-ghost" id="confirm-dialog-cancel" style="flex:1">${cancelLabel}</button>
+          <button type="button" class="btn btn-primary" id="confirm-dialog-ok" style="flex:1">${okLabel}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const finish = (result) => { overlay.remove(); resolve(result); };
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) finish(false); });
+    overlay.querySelector('#confirm-dialog-cancel').addEventListener('click', () => finish(false));
+    overlay.querySelector('#confirm-dialog-ok').addEventListener('click', () => finish(true));
+  });
+}
+
 // ── SKELETON ─────────────────────────────────────────────────────────────────
 
 export function showSkeleton(container, html) {
