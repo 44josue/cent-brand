@@ -82,7 +82,7 @@ export async function renderAdminShell(pageTitle = 'Dashboard', pageCallback = n
           </a>
 
           <a href="${pageUrl('admin/customers/')}" class="sidebar-link ${isActive(currentPath, '/admin/customers') ? 'active' : ''}">
-            ${icon('users')} Customers
+            ${icon('users')} Users
           </a>
 
           <a href="${pageUrl('admin/products/')}" class="sidebar-link ${isActive(currentPath, '/admin/products') ? 'active' : ''}">
