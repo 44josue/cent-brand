@@ -48,7 +48,7 @@ export async function requireAdmin() {
   }
 
   const profile = await getProfile(user.id);
-  if (!profile || !['admin', 'ops'].includes(profile.role)) {
+  if (!profile || profile.role !== 'admin') {
     window.location.href = pageUrl('login/');
     return null;
   }

@@ -338,7 +338,7 @@ async function loadAuthState() {
     const profile = await getCurrentProfile();
     if (!profile) return;
 
-    if (['admin', 'ops'].includes(profile.role)) {
+    if (profile.role === 'admin') {
       const btn = document.getElementById('account-btn');
       if (btn) { btn.href = pageUrl('admin/'); btn.title = 'Admin Dashboard'; }
       const slot = document.getElementById('mobile-nav-admin-slot');

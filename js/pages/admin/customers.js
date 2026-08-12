@@ -16,7 +16,6 @@ async function renderPage(container) {
           <select class="input input-sm" id="role-filter" style="width:130px">
             <option value="">All roles</option>
             <option value="admin">Admin</option>
-            <option value="ops">Ops</option>
             <option value="customer">Customer</option>
           </select>
           <select class="input input-sm" id="status-filter" style="width:130px">
@@ -101,34 +100,44 @@ function renderProfiles(profiles, container, myId, bannedIds) {
     container.innerHTML = `<div class="card"><p style="color:var(--text-muted);font-size:var(--text-sm)">No matching accounts found.</p></div>`;
     return;
   }
-  const roleBadge = (role) => {
-    const map = { admin: 'badge-error', ops: 'badge-warning', customer: 'badge-default' };
-    return `<span class="badge ${map[role] || 'badge-default'}">${role || 'customer'}</span>`;
-  };
+
   container.innerHTML = `
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Role</th><th>Status</th><th>Delete</th></tr></thead>
         <tbody>
           ${profiles.map(p => {
             const isSelf = p.id === myId;
             const isAdmin = p.role === 'admin';
             const isBanned = bannedIds.has(p.id);
-            const roleActions = isSelf ? '' : (isAdmin
-              ? `<button class="btn btn-ghost btn-sm cust-role-btn" data-id="${p.id}" data-action="demote">Make Customer</button>`
-              : `<button class="btn btn-ghost btn-sm cust-role-btn" data-id="${p.id}" data-action="promote">Make Admin</button>`);
-            const banDeleteActions = (isSelf || isAdmin) ? '' : `
-              <button class="btn btn-ghost btn-sm cust-ban-btn" data-id="${p.id}" data-action="${isBanned ? 'unban' : 'ban'}">${isBanned ? 'Unban' : 'Ban'}</button>
-              <button class="btn btn-ghost btn-sm cust-delete-btn" data-id="${p.id}" data-name="${p.full_name || p.email || 'this account'}" style="color:var(--error)">Delete</button>
-            `;
+
+            const roleCell = isSelf
+              ? `<span class="badge badge-error">admin (you)</span>`
+              : `<select class="input input-sm cust-role-select" data-id="${p.id}" data-prev="${isAdmin ? 'admin' : 'customer'}">
+                  <option value="customer" ${!isAdmin ? 'selected' : ''}>Customer</option>
+                  <option value="admin" ${isAdmin ? 'selected' : ''}>Admin</option>
+                </select>`;
+
+            const statusCell = (isSelf || isAdmin)
+              ? `<span style="color:var(--text-muted);font-size:var(--text-sm)">—</span>`
+              : `<select class="input input-sm cust-status-select" data-id="${p.id}" data-prev="${isBanned ? 'banned' : 'active'}">
+                  <option value="active" ${!isBanned ? 'selected' : ''}>Active</option>
+                  <option value="banned" ${isBanned ? 'selected' : ''}>Banned</option>
+                </select>`;
+
+            const deleteCell = (isSelf || isAdmin)
+              ? `<span style="color:var(--text-muted);font-size:var(--text-sm)">—</span>`
+              : `<button class="btn btn-ghost btn-sm cust-delete-btn" data-id="${p.id}" data-name="${p.full_name || p.email || 'this account'}" style="color:var(--error)">Delete</button>`;
+
             return `
             <tr>
               <td data-label="Name" style="font-weight:600;font-size:var(--text-sm)">${p.full_name || '—'} ${isBanned ? '<span class="badge badge-error" style="margin-left:6px">Banned</span>' : ''}</td>
               <td data-label="Email" style="font-size:var(--text-sm)">${p.email || '—'}</td>
               <td data-label="Phone" style="font-size:var(--text-sm);color:var(--text-muted)">${p.phone || '—'}</td>
-              <td data-label="Role">${roleBadge(p.role)}</td>
               <td data-label="Joined" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(p.created_at)}</td>
-              <td data-label="Action" style="display:flex;gap:var(--space-2);justify-content:flex-end;flex-wrap:wrap">${roleActions}${banDeleteActions}</td>
+              <td data-label="Role">${roleCell}</td>
+              <td data-label="Status">${statusCell}</td>
+              <td data-label="Delete">${deleteCell}</td>
             </tr>
           `;
           }).join('')}
@@ -136,33 +145,38 @@ function renderProfiles(profiles, container, myId, bannedIds) {
       </table>
     </div>`;
 
-  container.querySelectorAll('.cust-role-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const action = btn.dataset.action;
+  container.querySelectorAll('.cust-role-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const newVal = sel.value;
+      const prev = sel.dataset.prev;
+      const action = newVal === 'admin' ? 'promote' : 'demote';
       const verb = action === 'promote' ? 'make this user an admin' : 'remove admin access from this user';
-      if (!confirm(`Are you sure you want to ${verb}?`)) return;
-      btn.disabled = true;
+      if (!confirm(`Are you sure you want to ${verb}?`)) { sel.value = prev; return; }
+      sel.disabled = true;
       try {
-        await callEdge('admin-manage-user', { userId: btn.dataset.id, action });
+        await callEdge('admin-manage-user', { userId: sel.dataset.id, action });
         toast.success(action === 'promote' ? 'User is now an admin.' : 'User is now a regular customer.');
         window.location.reload();
       } catch (err) {
         toast.error(err.message || 'Could not update role.');
-        btn.disabled = false;
+        sel.value = prev;
+        sel.disabled = false;
       }
     });
   });
 
-  container.querySelectorAll('.cust-ban-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const action = btn.dataset.action;
-      btn.disabled = true;
+  container.querySelectorAll('.cust-status-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const newVal = sel.value;
+      const prev = sel.dataset.prev;
+      const action = newVal === 'banned' ? 'ban' : 'unban';
+      if (!confirm(action === 'ban' ? 'Ban this account?' : 'Unban this account?')) { sel.value = prev; return; }
+      sel.disabled = true;
       try {
-        await callEdge('admin-manage-user', { userId: btn.dataset.id, action });
+        await callEdge('admin-manage-user', { userId: sel.dataset.id, action });
         toast.success(action === 'ban' ? 'Account banned.' : 'Account unbanned.');
-        btn.textContent = action === 'ban' ? 'Unban' : 'Ban';
-        btn.dataset.action = action === 'ban' ? 'unban' : 'ban';
-        const nameCell = btn.closest('tr').querySelector('td');
+        sel.dataset.prev = newVal;
+        const nameCell = sel.closest('tr').querySelector('td');
         if (action === 'ban' && !nameCell.querySelector('.badge-error')) {
           nameCell.insertAdjacentHTML('beforeend', ' <span class="badge badge-error" style="margin-left:6px">Banned</span>');
         } else if (action === 'unban') {
@@ -170,8 +184,9 @@ function renderProfiles(profiles, container, myId, bannedIds) {
         }
       } catch (err) {
         toast.error(err.message || 'Could not update account.');
+        sel.value = prev;
       }
-      btn.disabled = false;
+      sel.disabled = false;
     });
   });
 

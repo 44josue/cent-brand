@@ -14,7 +14,7 @@ async function renderPage(container) {
         <button class="btn btn-primary btn-sm" id="invite-btn">+ Assign Role</button>
       </div>
       <p style="color:var(--text-muted);font-size:var(--text-sm);margin-bottom:var(--space-6)">
-        Manage admin and ops users. Role <strong>admin</strong> has full access; <strong>ops</strong> can manage orders only.
+        Manage admin users. Admins have full access to the dashboard, including managing other users.
       </p>
       <div id="staff-list"></div>
 
@@ -30,15 +30,8 @@ async function renderPage(container) {
               <label class="input-label">Email *</label>
               <input type="email" class="input" id="invite-email" placeholder="user@example.com">
             </div>
-            <div class="input-group">
-              <label class="input-label">Role</label>
-              <select class="input" id="invite-role">
-                <option value="ops">ops (orders only)</option>
-                <option value="admin">admin (full access)</option>
-              </select>
-            </div>
             <p style="font-size:var(--text-xs);color:var(--text-muted)">
-              The user must already have a CENT account. Their role will be updated immediately.
+              The user must already have a CENT account. They will be made an admin immediately.
             </p>
             <button class="btn btn-primary w-full" id="invite-save-btn">Update Role</button>
           </div>
@@ -49,7 +42,6 @@ async function renderPage(container) {
 
   document.getElementById('invite-btn')?.addEventListener('click', () => {
     document.getElementById('invite-email').value = '';
-    document.getElementById('invite-role').value = 'ops';
     document.getElementById('invite-modal').classList.remove('hidden');
   });
   document.getElementById('invite-modal-close')?.addEventListener('click', () => {
@@ -58,7 +50,6 @@ async function renderPage(container) {
 
   document.getElementById('invite-save-btn')?.addEventListener('click', async () => {
     const email = document.getElementById('invite-email').value.trim();
-    const role = document.getElementById('invite-role').value;
     if (!email) { toast.error('Email is required.'); return; }
 
     const btn = document.getElementById('invite-save-btn');
@@ -74,8 +65,8 @@ async function renderPage(container) {
       toast.error('No CENT account found for that email.');
     } else {
       try {
-        await updateStaffRole(profile.id, role);
-        toast.success(`Role updated to "${role}".`);
+        await updateStaffRole(profile.id, 'admin');
+        toast.success('User is now an admin.');
         document.getElementById('invite-modal').classList.add('hidden');
         loadStaff();
       } catch (err) {
@@ -103,7 +94,7 @@ async function loadStaff() {
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
             <h3>No staff assigned</h3>
-            <p>Assign a role to a CENT account holder to give them admin or ops access.</p>
+            <p>Assign the admin role to a CENT account holder to give them dashboard access.</p>
           </div>
         </div>
       `;

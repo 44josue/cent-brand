@@ -128,7 +128,7 @@ function renderAccount(profile, orders, wishlist) {
   document.getElementById('edit-profile-btn')?.addEventListener('click', () => {
     document.getElementById('edit-name').value = profile.full_name || '';
     document.getElementById('edit-phone').value = profile.phone || '';
-    document.getElementById('edit-job-title-group')?.classList.toggle('hidden', !['admin', 'ops'].includes(profile.role));
+    document.getElementById('edit-job-title-group')?.classList.toggle('hidden', !profile.role === 'admin');
     const jobTitleInput = document.getElementById('edit-job-title');
     if (jobTitleInput) jobTitleInput.value = profile.job_title || '';
     document.querySelector('#edit-profile-modal .modal-close')?.addEventListener('click', () => modal.close('edit-profile-modal'), { once: true });
@@ -152,7 +152,7 @@ function renderAccount(profile, orders, wishlist) {
         full_name: document.getElementById('edit-name').value.trim(),
         phone: document.getElementById('edit-phone').value.trim(),
       };
-      if (['admin', 'ops'].includes(profile.role)) {
+      if (profile.role === 'admin') {
         updates.job_title = document.getElementById('edit-job-title')?.value.trim() || null;
       }
       await updateProfile(profile.id, updates);

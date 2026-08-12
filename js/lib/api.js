@@ -724,7 +724,7 @@ export async function getStaff() {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, email, full_name, role, created_at')
-    .in('role', ['admin', 'ops'])
+    .eq('role', 'admin')
     .order('created_at');
   if (error) throw error;
   return data || [];
