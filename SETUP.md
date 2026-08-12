@@ -33,7 +33,7 @@ The logo appears in:
    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
    ```
-   All HTML files are in: `index.html`, `products/`, `product/`, `cart/`, `checkout/`, `checkout-payment/`, `order-tracking/`, `account/`, `login/`, `contact/`, `faq/`, `about/`, `collaborators/`, `privacy/`, `terms/`
+   All HTML files are in: `index.html`, `products/`, `product/`, `cart/`, `checkout/`, `checkout-payment/` (resume-payment page for orders awaiting submission, linked from order-tracking — not part of the main checkout flow), `order-tracking/`, `account/`, `login/`, `contact/`, `faq/`, `about/`, `collaborators/`, `privacy/`, `terms/`
 
 ---
 

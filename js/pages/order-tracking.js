@@ -402,6 +402,9 @@ function renderPaymentSection(order, latestPayment) {
       <div class="card" style="border-color:var(--warning)">
         <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-3);color:var(--warning)">⚠ Payment Required</h3>
         <p style="font-size:var(--text-sm);margin-bottom:var(--space-4)">Your order is waiting for payment. Please send <strong>${formatRWF(order.total_cents)}</strong> and submit your reference code.</p>
+        <!-- checkout-payment/ is the intentional resume-payment page for an
+             existing order — separate from checkout/, which is cart-driven
+             and has no "existing order" case. -->
         <a href="${pageUrl('checkout-payment/')}?order_id=${order.id}&token=${order.public_token}&total=${order.total_cents}" class="btn btn-primary">Submit Payment</a>
       </div>
     `;

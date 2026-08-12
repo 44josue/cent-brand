@@ -1,3 +1,7 @@
+// Resume-payment page for an order already placed (status
+// awaiting_payment_submission) — linked from order-tracking.js. This is
+// separate from the main checkout/ flow, which handles new orders and has
+// no "existing order" case (no cart, no shipping form needed here).
 import { renderNav } from '../components/nav.js';
 import { renderFooter } from '../components/footer.js';
 import { getPaymentChannels, getOrderByToken } from '../lib/api.js';
