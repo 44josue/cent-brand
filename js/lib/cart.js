@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { getOrCreateCart, upsertCartItem, getCartItems, updateCartItemQty, removeCartItem, clearCart } from './api.js';
+import { getOrCreateCart, upsertCartItem, getCartItems, updateCartItemQty, removeCartItem, clearCart, mergeCustomerCart } from './api.js';
 import { toast } from './utils.js';
 
 const CART_KEY = 'cent_cart';
@@ -66,7 +66,7 @@ export async function syncCart() {
   try {
     if (!state.cartId && !state.sessionToken) return state;
     const cartId = await getOrCreateCart(state.sessionToken);
-    const items = await getCartItems(cartId);
+    const items = await getCartItems(cartId, state.sessionToken);
     const fresh = { ...state, cartId, items, lastFetched: now };
     saveLocal(fresh);
     updateCartBadges();
@@ -83,7 +83,7 @@ export async function addToCart({ variantId, quantity = 1, productName, size, co
 
   try {
     const cartId = state.cartId || await getOrCreateCart(state.sessionToken);
-    const itemId = await upsertCartItem(cartId, variantId, quantity, priceCents || 0);
+    const itemId = await upsertCartItem(cartId, state.sessionToken, variantId, quantity, priceCents || 0);
 
     const existing = state.items.find(i => i.variantId === variantId);
     let newItems;
@@ -110,7 +110,7 @@ export async function addToCart({ variantId, quantity = 1, productName, size, co
 export async function setCartItemQty(itemId, variantId, quantity) {
   const state = loadLocal();
   try {
-    await updateCartItemQty(itemId, quantity);
+    await updateCartItemQty(itemId, state.sessionToken, quantity);
     const newItems = quantity <= 0
       ? state.items.filter(i => i.variantId !== variantId)
       : state.items.map(i => i.variantId === variantId ? { ...i, quantity } : i);
@@ -127,7 +127,7 @@ export async function setCartItemQty(itemId, variantId, quantity) {
 export async function removeFromCart(itemId, variantId) {
   const state = loadLocal();
   try {
-    await removeCartItem(itemId);
+    await removeCartItem(itemId, state.sessionToken);
     const newItems = state.items.filter(i => i.variantId !== variantId);
     saveLocal({ ...state, items: newItems, lastFetched: Date.now() });
     updateCartBadges();
@@ -142,7 +142,7 @@ export async function removeFromCart(itemId, variantId) {
 export async function clearLocalCart() {
   const state = loadLocal();
   if (state.cartId) {
-    try { await clearCart(state.cartId); } catch {}
+    try { await clearCart(state.cartId, state.sessionToken); } catch {}
   }
   saveLocal(defaultState());
   updateCartBadges();
@@ -150,13 +150,26 @@ export async function clearLocalCart() {
 
 // ── MERGE ON LOGIN ─────────────────────────────────────────────────────────────
 
+// Pulls in any items left on a cart from a previous session tied to this
+// same account (e.g. added to cart on another device while logged in), then
+// tags the current cart with the customer so future logins can merge too.
 export async function mergeCartOnLogin(userId) {
   const state = loadLocal();
-  if (!state.cartId || state.items.length === 0) return;
 
   try {
-    // carts uses customer_id, not user_id — skip merge for now
-    console.log('mergeCartOnLogin: skipped (customer lookup not implemented)');
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('profile_id', userId)
+      .maybeSingle();
+    if (!customer) return;
+
+    const cartId = state.cartId || await getOrCreateCart(state.sessionToken, customer.id);
+    await mergeCustomerCart(state.sessionToken, customer.id);
+
+    const items = await getCartItems(cartId, state.sessionToken);
+    saveLocal({ ...state, cartId, items, lastFetched: Date.now() });
+    updateCartBadges();
   } catch (err) {
     console.error('mergeCartOnLogin error:', err);
   }

@@ -288,103 +288,88 @@ export async function deleteCollection(id) {
 }
 
 // ── CART ──────────────────────────────────────────────────────────────────────
+// Guest carts have no logged-in owner, so they're identified purely by an
+// unguessable session_token generated client-side and persisted in
+// localStorage. All reads/writes go through SECURITY DEFINER RPCs that verify
+// the token server-side (carts/cart_items themselves are staff-only in RLS)
+// — the same trust model used for guest order lookups via get_public_order().
 
-export async function getOrCreateCart(sessionToken, userId = null) {
-  if (sessionToken) {
-    const { data } = await supabase
-      .from('carts')
-      .select('id')
-      .eq('session_token', sessionToken)
-      .maybeSingle();
-    if (data) return data.id;
-  }
-
-  const token = sessionToken || crypto.randomUUID();
-  const { data, error } = await supabase
-    .from('carts')
-    .insert({ session_token: token, expires_at: new Date(Date.now() + 7 * 86400000).toISOString() })
-    .select('id')
-    .single();
-  if (error) throw error;
-  return data.id;
-}
-
-export async function getCartItems(cartId) {
-  const { data, error } = await supabase
-    .from('cart_items')
-    .select(`
-      id, quantity,
-      product_variants(
-        id, size, color, price_cents, stock, is_active,
-        products(id, slug, name, product_media(url, is_primary, sort_order))
-      )
-    `)
-    .eq('cart_id', cartId);
-
-  if (error) throw error;
-  return (data || []).map(item => {
-    const v = item.product_variants;
-    const p = v?.products;
-    const media = [...(p?.product_media || [])].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    const img = media.find(m => m.is_primary) || media[0];
-    return {
-      id: item.id,
-      quantity: item.quantity,
-      variantId: v?.id,
-      size: v?.size,
-      color: v?.color,
-      priceCents: v?.price_cents,
-      stock: v?.stock,
-      variantActive: v?.is_active,
-      productId: p?.id,
-      productSlug: p?.slug,
-      productName: p?.name,
-      imageUrl: img?.url || null,
-    };
+export async function getOrCreateCart(sessionToken, customerId = null) {
+  const { data, error } = await supabase.rpc('cart_get_or_create', {
+    p_session_token: sessionToken,
+    p_customer_id: customerId,
   });
+  if (error) throw error;
+  return data;
 }
 
-export async function upsertCartItem(cartId, variantId, quantity, unitPriceCents = 0) {
-  const { data: existing } = await supabase
-    .from('cart_items')
-    .select('id, quantity')
-    .eq('cart_id', cartId)
-    .eq('variant_id', variantId)
-    .maybeSingle();
-
-  if (existing) {
-    const { error } = await supabase
-      .from('cart_items')
-      .update({ quantity: existing.quantity + quantity })
-      .eq('id', existing.id);
-    if (error) throw error;
-    return existing.id;
-  } else {
-    const { data, error } = await supabase
-      .from('cart_items')
-      .insert({ cart_id: cartId, variant_id: variantId, quantity, unit_price_cents: unitPriceCents })
-      .select('id')
-      .single();
-    if (error) throw error;
-    return data.id;
-  }
+export async function getCartItems(cartId, sessionToken) {
+  const { data, error } = await supabase.rpc('cart_get_items', {
+    p_cart_id: cartId,
+    p_session_token: sessionToken,
+  });
+  if (error) throw error;
+  return (data || []).map(item => ({
+    id: item.id,
+    quantity: item.quantity,
+    variantId: item.variant_id,
+    size: item.size,
+    color: item.color,
+    priceCents: item.price_cents,
+    stock: item.stock,
+    variantActive: item.variant_active,
+    productId: item.product_id,
+    productSlug: item.product_slug,
+    productName: item.product_name,
+    imageUrl: item.image_url,
+  }));
 }
 
-export async function updateCartItemQty(itemId, quantity) {
-  if (quantity <= 0) {
-    return removeCartItem(itemId);
-  }
-  const { error } = await supabase.from('cart_items').update({ quantity }).eq('id', itemId);
+export async function upsertCartItem(cartId, sessionToken, variantId, quantity, unitPriceCents = 0) {
+  const { data, error } = await supabase.rpc('cart_upsert_item', {
+    p_cart_id: cartId,
+    p_session_token: sessionToken,
+    p_variant_id: variantId,
+    p_quantity: quantity,
+    p_unit_price_cents: unitPriceCents,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCartItemQty(itemId, sessionToken, quantity) {
+  const { error } = await supabase.rpc('cart_update_item_qty', {
+    p_item_id: itemId,
+    p_session_token: sessionToken,
+    p_quantity: quantity,
+  });
   if (error) throw error;
 }
 
-export async function removeCartItem(itemId) {
-  const { error } = await supabase.from('cart_items').delete().eq('id', itemId);
+export async function removeCartItem(itemId, sessionToken) {
+  const { error } = await supabase.rpc('cart_remove_item', {
+    p_item_id: itemId,
+    p_session_token: sessionToken,
+  });
   if (error) throw error;
 }
 
-export async function clearCart(cartId) {
-  const { error } = await supabase.from('cart_items').delete().eq('cart_id', cartId);
+export async function clearCart(cartId, sessionToken) {
+  const { error } = await supabase.rpc('cart_clear', {
+    p_cart_id: cartId,
+    p_session_token: sessionToken,
+  });
+  if (error) throw error;
+}
+
+// Pulls any cart items left on a previous session tied to the same account
+// (e.g. added to cart on another device while logged in) into the current
+// session's cart, then tags the current cart with the customer for next time.
+export async function mergeCustomerCart(sessionToken, customerId) {
+  const { error } = await supabase.rpc('cart_merge_customer_cart', {
+    p_session_token: sessionToken,
+    p_customer_id: customerId,
+  });
   if (error) throw error;
 }
 
