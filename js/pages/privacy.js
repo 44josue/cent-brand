@@ -62,7 +62,7 @@ document.getElementById('main-content').innerHTML = `
 
       <section>
         <h2>7. Your Rights</h2>
-        <p>You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:hello@cent.rw">hello@cent.rw</a>. We will respond within 14 days.</p>
+        <p>You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:support@cent.rw">support@cent.rw</a>. We will respond within 14 days.</p>
       </section>
 
       <section>
@@ -77,7 +77,7 @@ document.getElementById('main-content').innerHTML = `
 
       <section>
         <h2>10. Contact</h2>
-        <p>For any privacy-related questions, contact us at <a href="mailto:hello@cent.rw">hello@cent.rw</a> or visit our <a href="${pageUrl('contact/')}">contact page</a>.</p>
+        <p>For any privacy-related questions, contact us at <a href="mailto:support@cent.rw">support@cent.rw</a> or visit our <a href="${pageUrl('contact/')}">contact page</a>.</p>
       </section>
     </div>
   </div>
