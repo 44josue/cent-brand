@@ -1,7 +1,8 @@
 import { renderAdminShell } from '../../components/admin-shell.js';
 import { getAdminProfiles, getAdminGuestCustomers, callEdge } from '../../lib/api.js';
-import { formatDate, initTheme, toast } from '../../lib/utils.js';
+import { formatDate, initTheme, toast, statusBadge } from '../../lib/utils.js';
 import { supabase } from '../../lib/supabase.js';
+import { pageUrl } from '../../lib/paths.js';
 
 initTheme();
 renderAdminShell('Users', renderPage);
@@ -214,17 +215,25 @@ function renderGuests(guests, container) {
   container.innerHTML = `
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Type</th><th>Date</th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Order Status</th><th>Action</th></tr></thead>
         <tbody>
-          ${guests.map(g => `
+          ${guests.map(g => {
+            const order = g.latestOrder;
+            const statusCell = order ? statusBadge(order.status) : '<span style="color:var(--text-muted);font-size:var(--text-sm)">—</span>';
+            const actionCell = order
+              ? `<a href="${pageUrl('admin/order-detail/')}?token=${order.public_token}" class="btn btn-ghost btn-sm">View Order</a>`
+              : '<span style="color:var(--text-muted);font-size:var(--text-sm)">—</span>';
+            return `
             <tr>
               <td data-label="Name" style="font-weight:600;font-size:var(--text-sm)">${g.guest_name || '—'}</td>
               <td data-label="Email" style="font-size:var(--text-sm)">${g.guest_email || '—'}</td>
               <td data-label="Phone" style="font-size:var(--text-sm);color:var(--text-muted)">${g.guest_phone || '—'}</td>
-              <td data-label="Role"><span class="badge badge-default">Customer</span></td>
               <td data-label="Joined" style="font-size:var(--text-xs);color:var(--text-muted)">${formatDate(g.created_at)}</td>
+              <td data-label="Order Status">${statusCell}</td>
+              <td data-label="Action">${actionCell}</td>
             </tr>
-          `).join('')}
+          `;
+          }).join('')}
         </tbody>
       </table>
     </div>`;

@@ -662,13 +662,16 @@ export async function uploadCmsImage(file) {
 export async function getAdminGuestCustomers({ search } = {}) {
   let query = supabase
     .from('customers')
-    .select('id, guest_name, guest_email, guest_phone, created_at')
+    .select('id, guest_name, guest_email, guest_phone, created_at, orders(id, public_token, status, created_at)')
     .eq('is_guest', true)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .order('created_at', { foreignTable: 'orders', ascending: false });
   if (search) query = query.or(`guest_name.ilike.%${search}%,guest_email.ilike.%${search}%`);
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  // A guest customer row is created per checkout, but embed as an array just
+  // in case — take the most recent order for the "view order" link/status.
+  return (data || []).map(c => ({ ...c, latestOrder: c.orders?.[0] || null }));
 }
 
 export async function getAdminProfiles({ search, limit = 500 } = {}) {
